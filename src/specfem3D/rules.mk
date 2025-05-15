@@ -1,0 +1,514 @@
+#=====================================================================
+#
+#                       S p e c f e m 3 D  G l o b e
+#                       ----------------------------
+#
+#     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+#                        Princeton University, USA
+#                and CNRS / University of Marseille, France
+#                 (there are currently many more authors!)
+# (c) Princeton University and CNRS / University of Marseille, April 2014
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+#=====================================================================
+
+#######################################
+
+specfem3D_TARGETS = \
+	$E/xspecfem3D \
+	$(EMPTY_MACRO)
+
+specfem3D_OBJECTS = \
+	$(xspecfem3D_OBJECTS) \
+	$(specfem3D_SOLVER_OBJECTS) \
+	$(EMPTY_MACRO)
+
+xspecfem3D_OBJECTS = \
+	$O/specfem3D.solverstatic.o  \
+	$(EMPTY_MACRO)
+
+specfem3D_SOLVER_OBJECTS = \
+	$O/assemble_MPI_gpu.solver.o \
+	$O/comp_source_spectrum.solver.o \
+	$O/compute_adj_source_frechet.solver.o \
+	$O/convert_time.solver.o \
+	$O/define_derivation_matrices.solver.o \
+	$O/file_io_threads.solver_cc.o \
+	$O/force_ftz.solver_cc.o \
+	$O/get_backazimuth.solver.o \
+	$O/get_cmt.solver.o \
+	$O/get_force.solver.o \
+	$O/get_event_info.solver.o \
+	$O/make_gravity.solver.o \
+	$O/netlib_specfun_erf.solver.o \
+	$(EMPTY_MACRO)
+
+# solver objects with either statically or dynamic allocated arrays;
+# in case of STATIC_COMPILATION, dependent upon OUTPUT_FILES/values_from_mesher.h file
+
+specfem3D_SOLVER_OBJECTS += \
+	$O/asdf_data.solverstatic_module.o \
+	$O/bcast_mesh_databases.solverstatic.o \
+	$O/check_stability.solverstatic.o \
+	$O/comp_source_time_function.solverstatic.o \
+	$O/compute_add_sources.solverstatic.o \
+	$O/compute_arrays_source.solverstatic.o \
+	$O/compute_boundary_kernel.solverstatic.o \
+	$O/compute_coupling.solverstatic.o \
+	$O/compute_element.solverstatic.o \
+	$O/compute_element_att_memory.solverstatic.o \
+	$O/compute_element_strain.solverstatic.o \
+	$O/compute_forces_acoustic_calling_routine.solverstatic.o \
+	$O/compute_forces_viscoelastic_calling_routine.solverstatic.o \
+	$O/compute_forces_crust_mantle_noDev.solverstatic.o \
+	$O/compute_forces_crust_mantle_Dev.solverstatic.o \
+	$O/compute_forces_inner_core_noDev.solverstatic.o \
+	$O/compute_forces_inner_core_Dev.solverstatic.o \
+	$O/compute_forces_outer_core_noDev.solverstatic.o \
+	$O/compute_forces_outer_core_Dev.solverstatic.o \
+	$O/compute_kernels.solverstatic.o \
+	$O/compute_seismograms.solverstatic.o \
+	$O/compute_stacey_crust_mantle.solverstatic.o \
+	$O/compute_stacey_outer_core.solverstatic.o \
+	$O/compute_strain_att.solverstatic.o \
+	$O/finalize_simulation.solverstatic.o \
+	$O/get_attenuation.solverstatic.o \
+	$O/initialize_simulation.solverstatic.o \
+	$O/iterate_time.solverstatic.o \
+	$O/iterate_time_undoatt.solverstatic.o \
+	$O/locate_point.solverstatic.o \
+	$O/locate_receivers.solverstatic.o \
+	$O/locate_regular_points.solverstatic.o \
+	$O/locate_sources.solverstatic.o \
+	$O/multiply_arrays_source.solverstatic.o \
+	$O/noise_tomography.solverstatic.o \
+	$O/prepare_attenuation.solverstatic.o \
+	$O/prepare_elastic_elements.solverstatic.o \
+	$O/prepare_gpu.solverstatic.o \
+	$O/prepare_gravity.solverstatic.o \
+	$O/prepare_movie.solverstatic.o \
+	$O/prepare_noise.solverstatic.o \
+	$O/prepare_oceans.solverstatic.o \
+	$O/prepare_optimized_arrays.solverstatic.o \
+	$O/prepare_stacey.solverstatic.o \
+	$O/prepare_timerun.solverstatic.o \
+	$O/prepare_vtk_window.solverstatic.o \
+	$O/prepare_wavefields.solverstatic.o \
+	$O/print_stf_file.solverstatic.o \
+	$O/read_adjoint_sources.solverstatic.o \
+	$O/read_arrays_solver.solverstatic.o \
+	$O/read_arrays_solver_hdf5.solverstatic.o \
+	$O/read_forward_arrays.solverstatic.o \
+	$O/read_forward_arrays_hdf5.solverstatic.o \
+	$O/read_mesh_parameters.solverstatic.o \
+	$O/read_mesh_databases.solverstatic.o \
+	$O/read_topography_bathymetry.solverstatic.o \
+	$O/SIEM_compute_kernels.solverstatic.o \
+	$O/SIEM_compute_seismograms.solverstatic.o \
+	$O/SIEM_index_region.solverstatic.o \
+	$O/SIEM_infinite_element.solverstatic.o \
+	$O/SIEM_poisson.solverstatic.o \
+	$O/SIEM_prepare_iteration.solverstatic.o \
+	$O/SIEM_prepare_solver.solverstatic.o \
+	$O/SIEM_solve.solverstatic.o \
+	$O/SIEM_solver_mpi.solverstatic.o \
+	$O/SIEM_solver_petsc.solverstatic.o \
+	$O/save_forward_arrays.solverstatic.o \
+	$O/save_forward_arrays_hdf5.solverstatic.o \
+	$O/save_kernels.solverstatic.o \
+	$O/save_kernels_hdf5.solverstatic.o \
+	$O/save_regular_kernels.solverstatic.o \
+	$O/setup_GLL_points.solverstatic.o \
+	$O/setup_sources_receivers.solverstatic.o \
+	$O/specfem3D_par.solverstatic_module.o \
+	$O/ucb_heaviside.solverstatic.o \
+	$O/update_displacement_LDDRK.solverstatic.o \
+	$O/update_displacement_Newmark.solverstatic.o \
+	$O/write_movie_output.solverstatic.o \
+	$O/write_movie_volume.solverstatic.o \
+	$O/write_movie_volume_hdf5.solverstatic.o \
+	$O/write_movie_surface.solverstatic.o \
+	$O/write_movie_surface_hdf5.solverstatic.o \
+	$O/write_output_ASCII.solverstatic.o \
+	$O/write_output_SAC.solverstatic.o \
+	$O/write_output_HDF5.solverstatic.o \
+	$O/write_seismograms.solverstatic.o \
+	$(EMPTY_MACRO)
+
+specfem3D_MODULES = \
+	$(FC_MODDIR)/asdf_data.$(FC_MODEXT) \
+	$(FC_MODDIR)/constants_solver.$(FC_MODEXT) \
+	$(FC_MODDIR)/manager_adios.$(FC_MODEXT) \
+	$(FC_MODDIR)/mod_element.$(FC_MODEXT) \
+	$(FC_MODDIR)/mod_element_att.$(FC_MODEXT) \
+	$(FC_MODDIR)/mod_element_strain.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_crustmantle.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_innercore.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_outercore.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_trinfinite.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_infinite.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_noise.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_movie.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_full_gravity.$(FC_MODEXT) \
+	$(FC_MODDIR)/siem_infinite_element.$(FC_MODEXT) \
+	$(FC_MODDIR)/siem_poisson.$(FC_MODEXT) \
+	$(FC_MODDIR)/siem_solver_mpi.$(FC_MODEXT) \
+	$(FC_MODDIR)/siem_solver_petsc.$(FC_MODEXT) \
+	$(FC_MODDIR)/ucb_heaviside.$(FC_MODEXT) \
+	$(EMPTY_MACRO)
+
+# These files come from the shared directory
+specfem3D_SHARED_OBJECTS = \
+	$O/adios_manager.shared_adios_module.o \
+	$O/assemble_MPI_scalar.shared.o \
+	$O/assemble_MPI_vector.shared.o \
+	$O/auto_ner.shared.o \
+	$O/binary_c_io.cc.o \
+	$O/broadcast_computed_parameters.shared.o \
+	$O/calendar.shared.o \
+	$O/count_elements.shared.o \
+	$O/count_number_of_sources.shared.o \
+	$O/count_points.shared.o \
+	$O/create_addressing.shared.o \
+	$O/create_name_database.shared.o \
+	$O/define_all_layers.shared.o \
+	$O/exit_mpi.shared.o \
+	$O/flush_system.shared.o \
+	$O/get_model_parameters.shared.o \
+	$O/get_timestep_and_layers.shared.o \
+	$O/gll_library.shared.o \
+	$O/heap_sort.shared.o \
+	$O/hex_nodes.shared.o \
+	$O/hdf5_manager.shared_hdf5_module.o \
+	$O/init_openmp.shared.o \
+	$O/intgrl.shared.o \
+	$O/lagrange_poly.shared.o \
+	$O/make_ellipticity.shared.o \
+	$O/model_mars_1D.shared.o \
+	$O/model_prem.shared.o \
+	$O/model_Sohl.shared.o \
+	$O/model_topo_bathy.shared.o \
+	$O/model_vpremoon.shared.o \
+	$O/parallel.sharedmpi.o \
+	$O/param_reader.cc.o \
+	$O/read_compute_parameters.shared.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/recompute_jacobian.shared.o \
+	$O/reduce.shared.o \
+	$O/rotate_tensor.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/search_kdtree.shared.o \
+	$O/shared_par.shared_module.o \
+	$O/SIEM_math_library.shared.o \
+	$O/spline_routines.shared.o \
+	$O/write_VTK_file.shared.o \
+	$(EMPTY_MACRO)
+
+###
+### GPU
+###
+
+specfem3D_SHARED_OBJECTS += $(gpu_OBJECTS)
+
+###
+### ADIOS
+###
+
+adios_specfem3D_OBJECTS = \
+	$O/read_arrays_solver_adios.solverstatic_adios.o \
+	$O/read_attenuation_adios.solverstatic_adios.o \
+	$O/read_forward_arrays_adios.solverstatic_adios.o \
+	$O/read_mesh_databases_adios.solverstatic_adios.o \
+	$O/save_forward_arrays_adios.solverstatic_adios.o \
+	$O/save_kernels_adios.solverstatic_adios.o \
+	$(EMPTY_MACRO)
+
+adios_specfem3D_SHARED_OBJECTS = \
+	$O/adios_helpers_addons.shared_adios_cc.o \
+	$O/adios_helpers_definitions.shared_adios.o \
+	$O/adios_helpers_readers.shared_adios.o \
+	$O/adios_helpers_writers.shared_adios.o \
+	$O/adios_helpers.shared_adios.o \
+	$(EMPTY_MACRO)
+
+adios_specfem3D_SHARED_STUBS = \
+	$O/adios_method_stubs.cc.o \
+	$(EMPTY_MACRO)
+
+# conditional adios linking
+ifeq ($(ADIOS),yes)
+	specfem3D_SOLVER_OBJECTS += $(adios_specfem3D_OBJECTS)
+	specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_OBJECTS)
+else ifeq ($(ADIOS2),yes)
+	specfem3D_SOLVER_OBJECTS += $(adios_specfem3D_OBJECTS)
+	specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_OBJECTS)
+else
+	specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_STUBS)
+endif
+
+###
+### ADIOS2
+###
+
+#adios2_specfem3D_OBJECTS = \
+#	$O/read_forward_arrays_adios2.solverstatic_adios2.o \
+#	$O/save_forward_arrays_adios2.solverstatic_adios2.o \
+#	$O/save_kernels_adios2.solverstatic_adios2.o \
+#	$(EMPTY_MACRO)
+#	$O/read_arrays_solver_adios2.solverstatic_adios2.o \
+#	$O/read_attenuation_adios2.solverstatic_adios2.o \
+#	$O/read_mesh_databases_adios2.solverstatic_adios2.o \
+
+#adios2_specfem3D_SHARED_OBJECTS = \
+#	$O/adios2_helpers_read.shared_adios2_module.o \
+#	$(EMPTY_MACRO)
+
+#adios2_specfem3D_SHARED_STUBS = \
+#	$(EMPTY_MACRO)
+
+# conditional adios2 linking
+#ifeq ($(ADIOS2),yes)
+#specfem3D_OBJECTS += $(adios2_specfem3D_OBJECTS)
+#specfem3D_SHARED_OBJECTS += $(adios2_specfem3D_SHARED_OBJECTS)
+#else
+#specfem3D_SHARED_OBJECTS += $(adios2_specfem3D_SHARED_STUBS)
+#endif
+
+###
+### ASDF
+###
+
+asdf_specfem3D_OBJECTS = \
+	$O/write_output_ASDF.solverstatic.o \
+	$O/read_adjoint_sources_ASDF.solverstatic.o \
+	$(EMPTY_MACRO)
+
+asdf_specfem3D_SHARED_OBJECTS = $(asdf_shared_OBJECTS)
+asdf_specfem3D_SHARED_STUBS = $(asdf_shared_STUBS)
+
+# conditional asdf linking
+ifeq ($(ASDF),yes)
+	specfem3D_SOLVER_OBJECTS += $(asdf_specfem3D_OBJECTS)
+	specfem3D_SHARED_OBJECTS += $(asdf_specfem3D_SHARED_OBJECTS)
+else
+	specfem3D_SHARED_OBJECTS += ${asdf_specfem3D_SHARED_STUBS}
+endif
+
+# conditional CEM or EMC model
+ifeq ($(CEM),yes)
+	specfem3D_SOLVER_OBJECTS += $O/read_write_netcdf.checknetcdf.o
+else ifeq ($(EMC),yes)
+	specfem3D_SOLVER_OBJECTS += $O/read_write_netcdf.checknetcdf.o
+else ifeq ($(NETCDF),yes)
+	specfem3D_SOLVER_OBJECTS += $O/read_write_netcdf.checknetcdf.o
+endif
+
+
+###
+### VTK
+###
+
+vtk_specfem3D_OBJECTS = \
+  $O/visual_vtk.visualcc.o \
+	$(EMPTY_MACRO)
+
+vtk_specfem3D_STUBS = \
+	$O/visual_vtk_stubs.visualc.o \
+	$(EMPTY_MACRO)
+
+# conditional vtk linking
+ifeq ($(VTK),yes)
+	specfem3D_SOLVER_OBJECTS += $(vtk_specfem3D_OBJECTS)
+else
+	specfem3D_SOLVER_OBJECTS += $(vtk_specfem3D_STUBS)
+endif
+
+###
+### LIBXSMM
+###
+# conditional module
+ifeq ($(XSMM),yes)
+	specfem3D_MODULES += $(FC_MODDIR)/my_libxsmm.$(FC_MODEXT)
+endif
+
+## static compilation
+# constants_solver module requires the file OUTPUT_FILES/values_from_mesher.h
+ifeq ($(STATIC_COMPILATION), yes)
+	reqstatic_header = ${OUTPUT}/values_from_mesher.h
+else
+	reqstatic_header =
+endif
+
+##
+## PETSC support
+##
+ifeq ($(PETSC),yes)
+	specfem3D_MODULES += $(FC_MODDIR)/siem_solver_petsc.$(FC_MODEXT)
+endif
+
+
+##
+## HDF5
+##
+
+ifeq ($(HDF5),yes)
+specfem3D_MODULES += \
+	$(FC_MODDIR)/specfem_par_movie_hdf5.$(FC_MODEXT) \
+	$(EMPTY_MACRO)
+endif
+
+#######################################
+
+####
+#### rules for executables
+####
+
+SPECFEM_LINK_FLAGS = $(MPILIBS)
+
+# cuda/opencl/hip
+SPECFEM_LINK_FLAGS += $(GPU_LINK)
+
+# non-gpu or opencl
+ifeq ($(ASDF),yes)
+SPECFEM_LINK_FLAGS += $(ASDF_LIBS)
+endif
+
+
+${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
+	@echo ""
+	@echo "building xspecfem3D $(BUILD_VERSION_TXT)"
+	@echo ""
+
+## use MPI here
+# add OpenMP compiler flag here if needed
+#	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+
+	${FCLINK} -o $@ $+ $(SPECFEM_LINK_FLAGS)
+	@echo ""
+
+#######################################
+
+## compilation directories
+S := ${S_TOP}/src/specfem3D
+$(specfem3D_OBJECTS): S = ${S_TOP}/src/specfem3D
+
+###
+### additional dependencies
+###
+
+$O/write_output_ASDF.solverstatic.o: $O/asdf_data.solverstatic_module.o
+$O/compute_arrays_source.solverstatic.o: $O/write_seismograms.solverstatic.o
+$O/iterate_time.solverstatic.o: $O/write_seismograms.solverstatic.o
+$O/iterate_time_undoatt.solverstatic.o: $O/write_seismograms.solverstatic.o
+$O/locate_receivers.solverstatic.o: $O/write_seismograms.solverstatic.o
+$O/read_adjoint_sources.solverstatic.o: $O/write_seismograms.solverstatic.o
+
+$O/specfem3D_par.solverstatic_module.o: $O/adios_manager.shared_adios_module.o
+
+$O/setup_sources_receivers.solverstatic.o: $O/search_kdtree.shared.o
+$O/locate_point.solverstatic.o: $O/search_kdtree.shared.o
+
+$O/make_gravity.solver.o: $O/model_prem.shared.o $O/model_Sohl.shared.o $O/model_vpremoon.shared.o
+
+# for Berkeley ucb stf
+$O/comp_source_time_function.solverstatic.o: $O/ucb_heaviside.solverstatic.o
+$O/setup_sources_receivers.solverstatic.o: $O/ucb_heaviside.solverstatic.o
+
+$O/compute_forces_crust_mantle_Dev.solverstatic.o: $O/compute_element.solverstatic.o $O/compute_element_att_memory.solverstatic.o
+$O/compute_forces_crust_mantle_noDev.solverstatic.o: $O/compute_element.solverstatic.o $O/compute_element_att_memory.solverstatic.o
+$O/compute_forces_inner_core_Dev.solverstatic.o: $O/compute_element.solverstatic.o $O/compute_element_att_memory.solverstatic.o
+$O/compute_forces_inner_core_noDev.solverstatic.o: $O/compute_element.solverstatic.o $O/compute_element_att_memory.solverstatic.o
+
+$O/compute_kernels.solverstatic.o: $O/compute_element_strain.solverstatic.o
+$O/compute_seismograms.solverstatic.o: $O/compute_element_strain.solverstatic.o
+$O/compute_strain_att.solverstatic.o: $O/compute_element_strain.solverstatic.o
+
+# Version file
+$O/initialize_simulation.solverstatic.o: ${SETUP}/version.fh
+
+# SIEM
+$O/SIEM_compute_kernels.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o \
+																				$O/SIEM_solver_petsc.solverstatic.o $O/SIEM_solver_mpi.solverstatic.o
+$O/SIEM_infinite_element.solverstatic.o: $O/SIEM_math_library.shared.o
+$O/SIEM_poisson.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_infinite_element.solverstatic.o
+$O/SIEM_prepare_iteration.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o \
+																$O/SIEM_solver_petsc.solverstatic.o $O/SIEM_solver_mpi.solverstatic.o
+$O/SIEM_prepare_solver.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o
+$O/SIEM_solve.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o \
+															$O/SIEM_solver_petsc.solverstatic.o $O/SIEM_solver_mpi.solverstatic.o
+$O/SIEM_solver_mpi.solverstatic.o: $O/SIEM_math_library.shared.o
+$O/SIEM_solver_petsc.solverstatic.o: $O/SIEM_math_library.shared.o
+$O/SIEM_compute_seismograms.solverstatic.o: $O/SIEM_math_library.shared.o
+
+
+###
+### specfem3D - optimized flags and dependence on values from mesher here
+###
+$O/%.solverstatic_module.o: $S/%.F90 $O/shared_par.shared_module.o $(reqstatic_header)
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.solverstatic_module.o: $S/%.f90 $O/shared_par.shared_module.o $(reqstatic_header)
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.solverstatic.o: $S/%.f90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.solverstatic.o: $S/%.F90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.solverstatic_openmp.o: $S/%.f90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
+# add OpenMP compiler flag here if needed
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -qsmp=omp -o $@ $<
+
+
+$O/%.solverstatic_adios.o: $S/%.f90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.solverstatic_adios.o: $S/%.F90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+
+###
+###
+### no dependence on values from mesher here
+###
+
+$O/%.solver.o: $S/%.f90 $O/shared_par.shared_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.solver.o: $S/%.F90 $O/shared_par.shared_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.solver_cc.o: $S/%.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+
+###
+### VTK compilation
+###
+
+$O/%.visualcc.o: $S/%.cpp ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(MPI_INCLUDES) -o $@ $<
+
+$O/%.visualc.o: $S/%.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(MPI_INCLUDES) -o $@ $<
+
+###
+### CEM
+###
+$O/%.checknetcdf.o: $S/%.f90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} $(NETCDF_INCLUDE) -c -o $@ $<
