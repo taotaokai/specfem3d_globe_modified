@@ -1,0 +1,1390 @@
+diff --git a/configure b/configure
+index 3bcb678e..6aa31157 100755
+--- a/configure
++++ b/configure
+@@ -8879,7 +8879,7 @@ then :
+ 
+       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: adding default '-lamdhip64' linking for HIP platform AMD" >&5
+ printf "%s\n" "$as_me: adding default '-lamdhip64' linking for HIP platform AMD" >&6;}
+-      HIP_LIBS="-lamdhip64"
++      HIP_LIBS="$HIP_LIBS -lamdhip64"
+ 
+ fi
+ 
+diff --git a/m4 b/m4
+index f5b39ccf..e490e14f 160000
+--- a/m4
++++ b/m4
+@@ -1 +1 @@
+-Subproject commit f5b39ccf9ebf30a919f1a36ea05a3b53e84cd899
++Subproject commit e490e14fb13595428d39055304bcf0ee7ab94806
+diff --git a/setup/constants.h.in b/setup/constants.h.in
+index 46aadc93..557c2f32 100644
+--- a/setup/constants.h.in
++++ b/setup/constants.h.in
+@@ -326,7 +326,7 @@
+ ! use this t0 as earliest starting time rather than the automatically calculated one
+ ! (must be positive and bigger than the automatically one to be effective;
+ !  simulation will start at t = - t0)
+-  double precision, parameter :: USER_T0 = 0.0d0
++!  double precision, parameter :: USER_T0 = 0.0d0  !!KTAO: moved to Par_file
+ 
+ ! distance threshold (in km) above which we consider that a receiver
+ ! is located outside the mesh and therefore excluded from the station list
+diff --git a/src/shared/auto_ner.f90 b/src/shared/auto_ner.f90
+index d63e4794..fdd04880 100644
+--- a/src/shared/auto_ner.f90
++++ b/src/shared/auto_ner.f90
+@@ -381,7 +381,7 @@
+   ! radii
+   radius(1)  = R_PLANET ! Surface radius
+   radius(2)  = RMOHO_FICTITIOUS_IN_MESHER   ! Moho - 1st Mesh Doubling Interface
+-  radius(3)  = R80
++  radius(3)  = R80   !!KTAO use R80_FICTITIOUS_IN_MESHER ?
+   radius(4)  = R220
+   radius(5)  = R400
+   radius(6)  = R600
+diff --git a/src/shared/broadcast_computed_parameters.f90 b/src/shared/broadcast_computed_parameters.f90
+index eabfe82e..d475c8d9 100644
+--- a/src/shared/broadcast_computed_parameters.f90
++++ b/src/shared/broadcast_computed_parameters.f90
+@@ -231,6 +231,10 @@
+   ! empirical minimum wavelength resolved estimation
+   call bcast_all_singledp(estimated_min_wavelength)
+ 
++  !!KTAO (optional) 
++  call bcast_all_singlel(USE_ECEF_COORDINATE)
++  call bcast_all_singledp(USER_T0)
++
+   ! non-main processes set their parameters
+   if (myrank /= 0) then
+ 
+diff --git a/src/shared/read_parameter_file.F90 b/src/shared/read_parameter_file.F90
+index 7adaf30b..58087b4d 100644
+--- a/src/shared/read_parameter_file.F90
++++ b/src/shared/read_parameter_file.F90
+@@ -341,6 +341,11 @@
+   call read_value_integer(USER_NSTEP, 'NSTEP', ier); ier = 0
+   ! no error checking, continue if not available
+ 
++  !!KTAO T0 specified to override automatic t0
++  call read_value_double_precision(USER_T0, 'T0', ier); ier = 0  !!KTAO: default to 0
++
++  call read_value_logical(USE_ECEF_COORDINATE, 'USE_ECEF_COORDINATE', ier); ier = 0  !! KTAO: default to .false. in shared_par.f90
++
+   ! (optional) regional local mesh parameters
+   if (REGIONAL_MESH_CUTOFF) then
+     ! flag to switch on local mesh
+diff --git a/src/shared/shared_par.f90 b/src/shared/shared_par.f90
+index 06f5a9e4..d8c85426 100644
+--- a/src/shared/shared_par.f90
++++ b/src/shared/shared_par.f90
+@@ -77,6 +77,7 @@
+   ! sources
+   logical :: USE_FORCE_POINT_SOURCE
+   logical :: USE_MONOCHROMATIC_CMT_SOURCE,PRINT_SOURCE_TIME_FUNCTION
++  logical :: USE_ECEF_COORDINATE = .false. !! KTAO: (optional) source location in ECEF x,y,z 
+ 
+   ! checkpointing/restart
+   integer :: NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN
+@@ -175,6 +176,7 @@
+   ! (optional) parameters
+   double precision :: USER_DT = -1.0  ! negative values will be ignored by default
+   integer :: USER_NSTEP = -1          ! negative to ignore by default
++  double precision :: USER_T0 = 0.0   !!KTAO  negative to ignore by default
+ 
+   ! (optional) local mesh parameters
+   ! for regional cutoff meshes (REGIONAL_MESH_CUTOFF must be .true. in Par_file)
+diff --git a/src/specfem3D/compute_arrays_source.f90 b/src/specfem3D/compute_arrays_source.f90
+index 2d395cc4..c458fc2a 100644
+--- a/src/specfem3D/compute_arrays_source.f90
++++ b/src/specfem3D/compute_arrays_source.f90
+@@ -141,7 +141,8 @@
+ 
+ ! compute array for force point source
+ 
+-  subroutine compute_arrays_source_forcesolution(sourcearray,hxis,hetas,hgammas,factor_source,comp_x,comp_y,comp_z,nu_source)
++  ! subroutine compute_arrays_source_forcesolution(sourcearray,hxis,hetas,hgammas,factor_source,comp_x,comp_y,comp_z,nu_source,no_rotate)
++  subroutine compute_arrays_source_forcesolution(sourcearray,hxis,hetas,hgammas,factor_source,comp_x,comp_y,comp_z)
+ 
+   use constants
+ 
+@@ -154,7 +155,8 @@
+   double precision, dimension(NGLLZ), intent(in) :: hgammas
+   double precision, intent(in) :: factor_source
+   double precision, intent(in) :: comp_x,comp_y,comp_z
+-  double precision, dimension(NDIM,NDIM), intent(in) :: nu_source
++  ! double precision, dimension(NDIM,NDIM), intent(in) :: nu_source
++  ! logical, intent(in) :: no_rotate !!KTAO add for USE_ECEF_COORDINATE
+ 
+   ! local parameters
+   integer :: i,j,k
+@@ -170,10 +172,21 @@
+       do i = 1,NGLLX
+         hlagrange = hxis(i) * hetas(j) * hgammas(k)
+ 
+-        ! identical source array components in x,y,z-direction
+-        sourcearrayd(:,i,j,k) = factor_source *  hlagrange * ( nu_source(1,:) * comp_x + &
+-                                                               nu_source(2,:) * comp_y + &
+-                                                               nu_source(3,:) * comp_z )
++        ! if (no_rotate) then
++
++        sourcearrayd(1,i,j,k) = factor_source *  hlagrange * comp_x
++        sourcearrayd(2,i,j,k) = factor_source *  hlagrange * comp_y
++        sourcearrayd(3,i,j,k) = factor_source *  hlagrange * comp_z
++
++        ! else
++        !   !!KTAO comp_x,y,z are actually comp_E,N,Up, project to x,y,z using nu_source
++        !   !!KTAO note nu_source(1,:) = N .dot. X,Y,Z and nu_source(2,:) = E .dot. X,Y,Z
++        !   ! identical source array components in x,y,z-direction
++        !   sourcearrayd(:,i,j,k) = factor_source *  hlagrange * ( nu_source(1,:) * comp_y + &
++        !                                                          nu_source(2,:) * comp_x + &
++        !                                                          nu_source(3,:) * comp_z )
++        ! endif
++
+       enddo
+     enddo
+   enddo
+diff --git a/src/specfem3D/compute_seismograms.F90 b/src/specfem3D/compute_seismograms.F90
+index e04a9604..2d834d09 100644
+--- a/src/specfem3D/compute_seismograms.F90
++++ b/src/specfem3D/compute_seismograms.F90
+@@ -106,6 +106,8 @@
+     NDIM,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
+     NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_CRUST_MANTLE_STR_OR_ATT
+ 
++  use shared_input_parameters, only: USE_ECEF_COORDINATE  !!KTAO
++
+   use specfem_par, only: &
+     NSTEP,NTSTEP_BETWEEN_OUTPUT_SAMPLE, &
+     nlength_seismogram,seismo_current, &
+@@ -241,11 +243,13 @@
+     eps_loc(3,1) = dxz
+     eps_loc(3,2) = dyz
+ 
+-    ! un-rotated
+-    !eps_loc_new(:,:) = eps_loc(:,:)
+-    !
+-    ! rotate to the local Cartesian coordinates (n-e-z):  eps_new = P*eps*P'
+-    eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
++    if (USE_ECEF_COORDINATE) then !!KTAO
++      ! un-rotated
++      eps_loc_new(:,:) = eps_loc(:,:)
++    else
++      ! rotate to the local Cartesian coordinates (n-e-z):  eps_new = P*eps*P'
++      eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
++    endif
+ 
+     ! distinguish between single and double precision for reals
+     seismograms(1,irec_local,seismo_current) = real(eps_loc_new(1,1), kind=CUSTOM_REAL)
+@@ -255,10 +259,16 @@
+     seismograms(5,irec_local,seismo_current) = real(eps_loc_new(1,3), kind=CUSTOM_REAL)
+     seismograms(6,irec_local,seismo_current) = real(eps_loc_new(2,3), kind=CUSTOM_REAL)
+ 
+-    seismograms(7:9,irec_local,seismo_current) = real(scale_displ*(nu_source(:,1,irec)*uxd + &
++    if (USE_ECEF_COORDINATE) then  !!KTAO
++      seismograms(7,irec_local,seismo_current) = real(scale_displ*uxd, kind=CUSTOM_REAL)
++      seismograms(8,irec_local,seismo_current) = real(scale_displ*uyd, kind=CUSTOM_REAL)
++      seismograms(9,irec_local,seismo_current) = real(scale_displ*uzd, kind=CUSTOM_REAL)
++    else
++      seismograms(7:9,irec_local,seismo_current) = real(scale_displ*(nu_source(:,1,irec)*uxd + &
+                                                                       nu_source(:,2,irec)*uyd + &
+                                                                       nu_source(:,3,irec)*uzd), &
+                                                                       kind=CUSTOM_REAL)
++    endif
+ 
+     ! interpolators
+     ! note: we explicitly copy the store arrays to local temporary arrays here
+diff --git a/src/specfem3D/finalize_simulation.F90 b/src/specfem3D/finalize_simulation.F90
+index 323f7a49..3d527543 100644
+--- a/src/specfem3D/finalize_simulation.F90
++++ b/src/specfem3D/finalize_simulation.F90
+@@ -238,6 +238,7 @@
+   deallocate(islice_selected_source, &
+              ispec_selected_source, &
+              Mxx,Myy,Mzz,Mxy,Mxz,Myz)
++  deallocate(xyz_found_source)  !!KTAO
+   deallocate(xi_source,eta_source,gamma_source)
+   deallocate(tshift_src,hdur,hdur_Gaussian)
+   deallocate(nu_source)
+@@ -245,9 +246,10 @@
+   if (USE_FORCE_POINT_SOURCE) then
+     deallocate(force_stf)
+     deallocate(factor_force_source)
+-    deallocate(comp_dir_vect_source_E)
+-    deallocate(comp_dir_vect_source_N)
+-    deallocate(comp_dir_vect_source_Z_UP)
++    deallocate(comp_dir_vect_source) !!KTAO
++    ! deallocate(comp_dir_vect_source_E)
++    ! deallocate(comp_dir_vect_source_N)
++    ! deallocate(comp_dir_vect_source_Z_UP)
+   endif
+   deallocate(sourcearrays)
+   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+diff --git a/src/specfem3D/get_cmt.f90 b/src/specfem3D/get_cmt.f90
+index f732962c..df0d3190 100644
+--- a/src/specfem3D/get_cmt.f90
++++ b/src/specfem3D/get_cmt.f90
+@@ -34,6 +34,8 @@
+ 
+   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,NOISE_TOMOGRAPHY,R_PLANET,RHOAV
+ 
++  use shared_input_parameters, only: USE_ECEF_COORDINATE !KTAO: add
++
+   implicit none
+ 
+ !--- input or output arguments of the subroutine below
+@@ -405,8 +407,17 @@
+ ! 1 Newton is 1 kg * 1 m / (1 second)^2
+ ! thus 1 Newton = 100,000 dynes
+ ! therefore 1 dyne.cm = 1e-7 Newton.m
+-!
+-  scaleM = 1.d7 * RHOAV * (R_PLANET**5) * PI*GRAV*RHOAV
++
++  if (USE_ECEF_COORDINATE) then
++    !!KTAO: CMTSOLUTION_ECEF use N*m for moment tensor
++    scaleM = RHOAV * (R_PLANET**5) * PI*GRAV*RHOAV
++  else
++    scaleM = 1.d7 * RHOAV * (R_PLANET**5) * PI*GRAV*RHOAV
++  endif
++
++  ! print *, "DEBUG: get_cmt(): moment_tensor =  ", moment_tensor
++  ! print *, "DEBUG: get_cmt(): scaleM =  ", scaleM
++
+   moment_tensor(:,:) = moment_tensor(:,:) / scaleM
+ 
+   contains
+diff --git a/src/specfem3D/get_force.f90 b/src/specfem3D/get_force.f90
+index 586ec6e0..418c243d 100644
+--- a/src/specfem3D/get_force.f90
++++ b/src/specfem3D/get_force.f90
+@@ -27,10 +27,9 @@
+ 
+   subroutine get_force(tshift_src,hdur,lat,long,depth,DT,NSOURCES, &
+                        min_tshift_src_original,force_stf,factor_force_source, &
+-                       comp_dir_vect_source_E,comp_dir_vect_source_N, &
+-                       comp_dir_vect_source_Z_UP)
++                       comp_dir_vect_source)
+ 
+-  use constants, only: IIN,MAX_STRING_LEN,TINYVAL,mygroup,PI,GRAV
++  use constants, only: IIN,MAX_STRING_LEN,TINYVAL,mygroup,PI,GRAV,NDIM
+   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,R_PLANET,RHOAV
+ 
+   implicit none
+@@ -43,9 +42,10 @@
+   integer, dimension(NSOURCES), intent(out) :: force_stf
+   double precision, intent(out) :: min_tshift_src_original
+   double precision, dimension(NSOURCES), intent(out) :: tshift_src,hdur,lat,long,depth,factor_force_source
+-  double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_E
+-  double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_N
+-  double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_Z_UP
++  double precision, dimension(NDIM, NSOURCES), intent(out) :: comp_dir_vect_source !!KTAO
++  ! double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_E
++  ! double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_N
++  ! double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_Z_UP
+ 
+   ! local variables below
+   integer :: isource,ier,ipos
+@@ -68,9 +68,10 @@
+ 
+   force_stf(:) = 0
+   factor_force_source(:) = 0.d0
+-  comp_dir_vect_source_E(:) = 0.d0
+-  comp_dir_vect_source_N(:) = 0.d0
+-  comp_dir_vect_source_Z_UP(:) = 0.d0
++  comp_dir_vect_source(:, :) = 0.d0
++  ! comp_dir_vect_source_E(:) = 0.d0
++  ! comp_dir_vect_source_N(:) = 0.d0
++  ! comp_dir_vect_source_Z_UP(:) = 0.d0
+ 
+ !
+ !---- read info
+@@ -179,27 +180,28 @@
+     read(IIN,"(a)") string
+     ipos = index(string,':')
+     if (ipos > 1 .and. ipos < len_trim(string)) then
+-      read(string(ipos+1:len_trim(string)),*) comp_dir_vect_source_E(isource)
++      read(string(ipos+1:len_trim(string)),*) comp_dir_vect_source(1, isource)
+     else
+-      read(string(29:len_trim(string)),*) comp_dir_vect_source_E(isource)
++      read(string(29:len_trim(string)),*) comp_dir_vect_source(1, isource)
+     endif
+ 
+     ! read direction vector's North component
+     read(IIN,"(a)") string
+     ipos = index(string,':')
+     if (ipos > 1 .and. ipos < len_trim(string)) then
+-      read(string(ipos+1:len_trim(string)),*) comp_dir_vect_source_N(isource)
++      ! read(string(ipos+1:len_trim(string)),*) comp_dir_vect_source_N(isource)
++      read(string(ipos+1:len_trim(string)),*) comp_dir_vect_source(2, isource)
+     else
+-      read(string(29:len_trim(string)),*) comp_dir_vect_source_N(isource)
++      read(string(29:len_trim(string)),*) comp_dir_vect_source(2, isource)
+     endif
+ 
+     ! read direction vector's vertical component
+     read(IIN,"(a)") string
+     ipos = index(string,':')
+     if (ipos > 1 .and. ipos < len_trim(string)) then
+-      read(string(ipos+1:len_trim(string)),*) comp_dir_vect_source_Z_UP(isource)
++      read(string(ipos+1:len_trim(string)),*) comp_dir_vect_source(3, isource)
+     else
+-      read(string(32:len_trim(string)),*) comp_dir_vect_source_Z_UP(isource)
++      read(string(32:len_trim(string)),*) comp_dir_vect_source(3, isource)
+     endif
+ 
+     ! checks half-duration
+@@ -258,9 +260,10 @@
+     if (hdur(isource) < TINYVAL) hdur(isource) = TINYVAL
+ 
+     ! check (tilted) force source direction vector
+-    length = sqrt( comp_dir_vect_source_E(isource)**2 &
+-                 + comp_dir_vect_source_N(isource)**2 &
+-                 + comp_dir_vect_source_Z_UP(isource)**2 )
++    length = sqrt(sum(comp_dir_vect_source(:,isource)**2)) !!KTAO: modify
++    ! length = sqrt( comp_dir_vect_source_E(isource)**2 &
++    !              + comp_dir_vect_source_N(isource)**2 &
++    !              + comp_dir_vect_source_Z_UP(isource)**2 )
+     if (length < TINYVAL) then
+       print *, 'normal length: ', length
+       print *, 'isource: ',isource
+diff --git a/src/specfem3D/locate_receivers.f90 b/src/specfem3D/locate_receivers.f90
+index 1887bd6a..fda4c108 100644
+--- a/src/specfem3D/locate_receivers.f90
++++ b/src/specfem3D/locate_receivers.f90
+@@ -216,6 +216,7 @@
+       n(3) = sin(thetan)*sin(phin)
+ 
+       ! get the Cartesian components of n in the model: nu
++      !!KTAO N-E-Up dot X-Y-Z, e.g. nu(1,1:3,irec) = North dot X-Y-Z at irec
+       nu_rec(iorientation,1,irec) = n(1)*sint*cosp + n(2)*cost*cosp - n(3)*sinp
+       nu_rec(iorientation,2,irec) = n(1)*sint*sinp + n(2)*cost*sinp + n(3)*cosp
+       nu_rec(iorientation,3,irec) = n(1)*cost - n(2)*sint
+@@ -559,7 +560,9 @@
+       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file STATIONS_FILTERED')
+       ! loop on all the stations to read station information
+       do irec = 1,nrec
+-        write(IOUT,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f9.1,1x,f9.1)') trim(station_name(irec)),trim(network_name(irec)), &
++        !KTAO switch sta,net to net,sta 
++        ! write(IOUT,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f9.1,1x,f9.1)') trim(station_name(irec)),trim(network_name(irec)), &
++        write(IOUT,'(a8,1x,a8,6x,f8.4,1x,f9.4,1x,f9.1,1x,f9.1)') trim(network_name(irec)),trim(station_name(irec)), &
+           sngl(stlat(irec)),sngl(stlon(irec)),sngl(stele(irec)),sngl(stbur(irec))
+       enddo
+       ! close receiver file
+@@ -667,7 +670,8 @@
+       enddo
+ 
+       ! reads in station information
+-      read(line(1:len_trim(line)),*,iostat=ier) station_name(irec),network_name(irec), &
++      ! read(line(1:len_trim(line)),*,iostat=ier) station_name(irec),network_name(irec), & !!KTAO
++      read(line(1:len_trim(line)),*,iostat=ier) network_name(irec), station_name(irec), &  !!KTAO switch order to net sta
+                                                 stlat(irec),stlon(irec),stele(irec),stbur(irec)
+       if (ier /= 0) then
+         write(IMAIN,*) 'Error reading in station ',irec
+diff --git a/src/specfem3D/locate_sources.f90 b/src/specfem3D/locate_sources.f90
+index c2ab7360..92473beb 100644
+--- a/src/specfem3D/locate_sources.f90
++++ b/src/specfem3D/locate_sources.f90
+@@ -47,12 +47,16 @@
+     hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz,Mw,M0, &
+     xi_source,eta_source,gamma_source,nu_source, &
+     islice_selected_source,ispec_selected_source, &
+-    tshift_src,source_theta_ref,source_phi_ref,source_final_distance_max
++    tshift_src,source_theta_ref,source_phi_ref,source_final_distance_max, &
++    xyz_found_source  !!KTAO add
++
++  use shared_input_parameters, only: USE_ECEF_COORDINATE  !! KTAO: add
+ 
+   ! forces
+   use specfem_par, only: &
+     USE_FORCE_POINT_SOURCE, USE_MONOCHROMATIC_CMT_SOURCE,force_stf,factor_force_source, &
+-    comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP
++    comp_dir_vect_source  !!KTAO
++    ! comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP
+ 
+   use specfem_par, only: &
+     nspec => NSPEC_CRUST_MANTLE
+@@ -72,7 +76,7 @@
+   double precision, allocatable, dimension(:,:) :: moment_tensor
+ 
+   double precision, allocatable, dimension(:) :: final_distance
+-  double precision, allocatable, dimension(:,:) :: xyz_found
++  ! double precision, allocatable, dimension(:,:) :: xyz_found
+ 
+   ! point locations
+   double precision, allocatable, dimension(:,:) :: xyz_target_subset
+@@ -142,13 +146,13 @@
+   allocate(srclat(NSOURCES),srclon(NSOURCES),srcdepth(NSOURCES), &
+            rsurface_source(NSOURCES), &
+            moment_tensor(6,NSOURCES), &
+-           xyz_found(NDIM,NSOURCES), &
++           ! xyz_found(NDIM,NSOURCES), &
+            final_distance(NSOURCES),stat=ier)
+   if (ier /= 0) call exit_MPI(myrank,'Error allocating temporary receiver arrays')
+   srclat(:) = 0.d0; srclon(:) = 0.d0; srcdepth(:) = 0.d0
+   rsurface_source(:) = 0.d0
+   moment_tensor(:,:) = 0.d0
+-  xyz_found(:,:) = 0.d0
++  ! xyz_found(:,:) = 0.d0
+   final_distance(:) = HUGEVAL
+ 
+   ! make sure we clean the future final array
+@@ -217,22 +221,88 @@
+       ! mapping from source number in current subset to real source number in all the subsets
+       isource = isource_in_this_subset + isources_already_done
+ 
+-      ! source lat/lon in degrees
+-      lat = srclat(isource)
+-      lon = srclon(isource)
++      !!KTAO get source location in X-Y-Z
++
++      !!KTAO handle USE_ECEF_COORDINATE
++      if (USE_ECEF_COORDINATE) then  !! source location in X,Y,Z
++
++        ! non-dimensionalization
++        x_target = srclat(isource) / R_PLANET     ! lat->x
++        y_target = srclon(isource) / R_PLANET     ! lon->y
++        z_target = srcdepth(isource) / R_PLANET   ! depth->z
++        r_target = sqrt(x_target**2 + y_target**2 + z_target**2)
++      
++        theta = asin(z_target/r_target)
++        phi = atan2(y_target, x_target)
++        call reduce(theta,phi)
++
++      else  !! source location in lat,lon,depth
++
++        ! point depth (in m)
++        depth = srcdepth(isource)*1000.0d0
++
++        ! source lat/lon in degrees
++        lat = srclat(isource)
++        lon = srclon(isource)
++
++        ! limits longitude to [0.0,360.0]
++        if (lon < 0.d0 ) lon = lon + 360.d0
++        if (lon > 360.d0 ) lon = lon - 360.d0
++
++        ! convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
++        call lat_2_geocentric_colat_dble(lat,theta,ELLIPTICITY_VAL)
++
++        ! longitude
++        phi = lon*DEGREES_TO_RADIANS
++
++        ! theta to [0,PI] and phi to [0,2PI]
++        call reduce(theta,phi)
++
++        ! normalized source radius
++        r0 = R_UNIT_SPHERE
++
++        ! finds elevation of position
++        if (TOPOGRAPHY) then
++          call get_topo_bathy(lat,lon,elevation,ibathy_topo)
++          r0 = r0 + elevation/R_PLANET
++        endif
++
++        ! ellipticity
++        if (ELLIPTICITY_VAL) then
++         ! adds ellipticity factor to radius
++          if (USE_OLD_VERSION_FORMAT) then
++            ! removes depth from r0 as reference location to determine ellipticity factor (ell)
++            radius_ell = r0 - depth/R_PLANET
++            call spline_evaluation(rspl_ellip,ellipicity_spline,ellipicity_spline2,nspl_ellip,radius_ell,ell)
++            dcost = dcos(theta)
++            p20 = 0.5d0 * (3.0d0 * dcost*dcost - 1.0d0)
++            r0 = r0 * (1.0d0 - (2.0d0/3.0d0) * ell * p20)
++          else
++            ! takes r0 as reference location to determine ellipticity factor
++            call add_ellipticity_rtheta(r0,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
++          endif
++        endif
+ 
+-      ! limits longitude to [0.0,360.0]
+-      if (lon < 0.d0 ) lon = lon + 360.d0
+-      if (lon > 360.d0 ) lon = lon - 360.d0
++        ! stores surface radius for info output
++        rsurface_source(isource) = r0
+ 
+-      ! convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
+-      call lat_2_geocentric_colat_dble(lat,theta,ELLIPTICITY_VAL)
++        ! subtracts source depth (given in m)
++        r0 = r0 - depth/R_PLANET
+ 
+-      ! longitude
+-      phi = lon*DEGREES_TO_RADIANS
++        ! source position
++        r_target = r0
+ 
+-      ! theta to [0,PI] and phi to [0,2PI]
+-      call reduce(theta,phi)
++        ! compute the Cartesian position of the source
++        sint = sin(theta)
++        cost = cos(theta)
++        sinp = sin(phi)
++        cosp = cos(phi)
++
++        x_target = r_target*sint*cosp
++        y_target = r_target*sint*sinp
++        z_target = r_target*cost
++
++      endif
+ 
+       ! stores first source theta/phi position (geocentric) as reference
+       ! for epicentral distance calculations of receivers
+@@ -241,38 +311,14 @@
+         source_theta_ref = theta
+       endif
+ 
++      !!KTAO get (N, E, Up) vectors in (x,y,z) coordinate
++
++      ! record three components for each station
+       sint = sin(theta)
+       cost = cos(theta)
+       sinp = sin(phi)
+       cosp = cos(phi)
+ 
+-      ! get the moment tensor
+-      Mrr = moment_tensor(1,isource)
+-      Mtt = moment_tensor(2,isource)
+-      Mpp = moment_tensor(3,isource)
+-      Mrt = moment_tensor(4,isource)
+-      Mrp = moment_tensor(5,isource)
+-      Mtp = moment_tensor(6,isource)
+-
+-      ! convert from a spherical to a Cartesian representation of the moment tensor
+-      Mxx(isource) = sint*sint*cosp*cosp*Mrr + cost*cost*cosp*cosp*Mtt + sinp*sinp*Mpp &
+-          + 2.0d0*sint*cost*cosp*cosp*Mrt - 2.0d0*sint*sinp*cosp*Mrp - 2.0d0*cost*sinp*cosp*Mtp
+-
+-      Myy(isource) = sint*sint*sinp*sinp*Mrr + cost*cost*sinp*sinp*Mtt + cosp*cosp*Mpp &
+-          + 2.0d0*sint*cost*sinp*sinp*Mrt + 2.0d0*sint*sinp*cosp*Mrp + 2.0d0*cost*sinp*cosp*Mtp
+-
+-      Mzz(isource) = cost*cost*Mrr + sint*sint*Mtt - 2.0d0*sint*cost*Mrt
+-
+-      Mxy(isource) = sint*sint*sinp*cosp*Mrr + cost*cost*sinp*cosp*Mtt - sinp*cosp*Mpp &
+-          + 2.0d0*sint*cost*sinp*cosp*Mrt + sint*(cosp*cosp-sinp*sinp)*Mrp + cost*(cosp*cosp-sinp*sinp)*Mtp
+-
+-      Mxz(isource) = sint*cost*cosp*Mrr - sint*cost*cosp*Mtt &
+-          + (cost*cost-sint*sint)*cosp*Mrt - cost*sinp*Mrp + sint*sinp*Mtp
+-
+-      Myz(isource) = sint*cost*sinp*Mrr - sint*cost*sinp*Mtt &
+-          + (cost*cost-sint*sint)*sinp*Mrt + cost*cosp*Mrp - sint*cosp*Mtp
+-
+-      ! record three components for each station
+       do iorientation = 1,3
+         ! initializes azimuth/dip
+         stazi = 0.d0
+@@ -297,66 +343,84 @@
+         thetan = (90.0d0+stdip)*DEGREES_TO_RADIANS
+         phin = stazi*DEGREES_TO_RADIANS
+ 
++        !!KTAO (n,e,u) -> (r,t,p) -> (x,y,z)
++
+         ! we use the same convention as in Harvard normal modes for the orientation
+         ! vertical component
+-        n(1) = cos(thetan)
++        n(1) = cos(thetan)                   !!KTAO iorientation .dot. \hat{r}
+         ! N-S component
+-        n(2) = - sin(thetan)*cos(phin)
++        n(2) = - sin(thetan)*cos(phin)       !!KTAO iorientation .dot. \hat{theta}
+         ! E-W component
+-        n(3) = sin(thetan)*sin(phin)
++        n(3) = sin(thetan)*sin(phin)         !!KTAO iorientation .dot. \hat{phi}
+ 
+         ! get the Cartesian components of n in the model: nu
+-        nu_source(iorientation,1,isource) = n(1)*sint*cosp + n(2)*cost*cosp - n(3)*sinp
+-        nu_source(iorientation,2,isource) = n(1)*sint*sinp + n(2)*cost*sinp + n(3)*cosp
+-        nu_source(iorientation,3,isource) = n(1)*cost - n(2)*sint
++        !!KTAO N-E-Up dot X-Y-Z, e.g. nu(1,1:3,isource) = North dot X-Y-Z at isource
++        nu_source(iorientation,1,isource) = n(1)*sint*cosp + n(2)*cost*cosp - n(3)*sinp !!KTAO iorientation .dot. \hat{x}
++        nu_source(iorientation,2,isource) = n(1)*sint*sinp + n(2)*cost*sinp + n(3)*cosp !!KTAO iorientation .dot. \hat{y}
++        nu_source(iorientation,3,isource) = n(1)*cost - n(2)*sint                       !!KTAO iorientation .dot. \hat{z}
+       enddo
+ 
+-      ! point depth (in m)
+-      depth = srcdepth(isource)*1000.0d0
++      !!KTAO get moment tensor in X-Y-Z coordinate
+ 
+-      ! normalized source radius
+-      r0 = R_UNIT_SPHERE
++      Mrr = moment_tensor(1,isource)
++      Mtt = moment_tensor(2,isource)
++      Mpp = moment_tensor(3,isource)
++      Mrt = moment_tensor(4,isource)
++      Mrp = moment_tensor(5,isource)
++      Mtp = moment_tensor(6,isource)
+ 
+-      ! finds elevation of position
+-      if (TOPOGRAPHY) then
+-        call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+-        r0 = r0 + elevation/R_PLANET
+-      endif
++      if (USE_ECEF_COORDINATE) then
+ 
+-      ! ellipticity
+-      if (ELLIPTICITY_VAL) then
+-       ! adds ellipticity factor to radius
+-        if (USE_OLD_VERSION_FORMAT) then
+-          ! removes depth from r0 as reference location to determine ellipticity factor (ell)
+-          radius_ell = r0 - depth/R_PLANET
+-          call spline_evaluation(rspl_ellip,ellipicity_spline,ellipicity_spline2,nspl_ellip,radius_ell,ell)
+-          dcost = dcos(theta)
+-          p20 = 0.5d0 * (3.0d0 * dcost*dcost - 1.0d0)
+-          r0 = r0 * (1.0d0 - (2.0d0/3.0d0) * ell * p20)
+-        else
+-          ! takes r0 as reference location to determine ellipticity factor
+-          call add_ellipticity_rtheta(r0,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
+-        endif
+-      endif
++        Mxx(isource) = Mrr
++        Myy(isource) = Mtt
++        Mzz(isource) = Mpp
++        Mxy(isource) = Mrt
++        Mxz(isource) = Mrp
++        Myz(isource) = Mtp
++       
++      else
++        ! convert from a spherical to a Cartesian representation of the moment tensor
++        Mxx(isource) = sint*sint*cosp*cosp*Mrr + cost*cost*cosp*cosp*Mtt + sinp*sinp*Mpp &
++            + 2.0d0*sint*cost*cosp*cosp*Mrt - 2.0d0*sint*sinp*cosp*Mrp - 2.0d0*cost*sinp*cosp*Mtp
++
++        Myy(isource) = sint*sint*sinp*sinp*Mrr + cost*cost*sinp*sinp*Mtt + cosp*cosp*Mpp &
++            + 2.0d0*sint*cost*sinp*sinp*Mrt + 2.0d0*sint*sinp*cosp*Mrp + 2.0d0*cost*sinp*cosp*Mtp
+ 
+-      ! stores surface radius for info output
+-      rsurface_source(isource) = r0
++        Mzz(isource) = cost*cost*Mrr + sint*sint*Mtt - 2.0d0*sint*cost*Mrt
+ 
+-      ! subtracts source depth (given in m)
+-      r0 = r0 - depth/R_PLANET
++        Mxy(isource) = sint*sint*sinp*cosp*Mrr + cost*cost*sinp*cosp*Mtt - sinp*cosp*Mpp &
++            + 2.0d0*sint*cost*sinp*cosp*Mrt + sint*(cosp*cosp-sinp*sinp)*Mrp + cost*(cosp*cosp-sinp*sinp)*Mtp
++
++        Mxz(isource) = sint*cost*cosp*Mrr - sint*cost*cosp*Mtt &
++            + (cost*cost-sint*sint)*cosp*Mrt - cost*sinp*Mrp + sint*sinp*Mtp
++
++        Myz(isource) = sint*cost*sinp*Mrr - sint*cost*sinp*Mtt &
++            + (cost*cost-sint*sint)*sinp*Mrt + cost*cosp*Mrp - sint*cosp*Mtp
++
++      endif
+ 
+-      ! source position
+-      r_target = r0
++      !!KTAO get force vector in X-Y-Z coordinate
++      if (USE_FORCE_POINT_SOURCE) then
+ 
+-      ! compute the Cartesian position of the source
+-      x_target = r_target*sint*cosp
+-      y_target = r_target*sint*sinp
+-      z_target = r_target*cost
++        ! when USE_ECEF_COORDINATE = true, comp_dir_vect_source is already in XYZ
++        if (.not. USE_ECEF_COORDINATE) then
++          !NOTE: nu_source(NEU, XYZ), comp_dir_vect_source(ENU)
++          !      see get_force.f90
++          comp_dir_vect_source(:,isource) = &
++            nu_source(1,:,isource) * comp_dir_vect_source(2,isource) + &  ! N projected to X,Y,Z
++            nu_source(2,:,isource) * comp_dir_vect_source(1,isource) + &  ! E
++            nu_source(3,:,isource) * comp_dir_vect_source(3,isource)      ! Up
++        endif
++       
++      endif
+ 
+       ! stores Cartesian positions
+       xyz_target_subset(1,isource_in_this_subset) = x_target
+       xyz_target_subset(2,isource_in_this_subset) = y_target
+       xyz_target_subset(3,isource_in_this_subset) = z_target
++
++      ! print *, "myrank, xyz_target = ", myrank, x_target, y_target, z_target
++
+     enddo
+ 
+     ! make sure we clean the subset array before the gather
+@@ -378,18 +442,26 @@
+       y_target = xyz_target_subset(2,isource_in_this_subset)
+       z_target = xyz_target_subset(3,isource_in_this_subset)
+ 
++      if (USE_ECEF_COORDINATE) then !!KTAO
++        call xyz_2_rlatlon_dble(x_target,y_target,z_target,r_target,lat,lon,ELLIPTICITY_VAL)
++      endif
++
+       ! locates best element and xi/eta/gamma interpolation values
+       call locate_point(x_target,y_target,z_target,lat,lon,ispec_selected,xi,eta,gamma, &
+                         x,y,z,distmin_not_squared,.true.)
+ 
++      !print *, "DEBUG: myrank, lat, lon = ", myrank, lat, lon
++      !print *, "DEBUG: myrank, xyz_target = ", myrank, x_target, y_target, z_target
++      !print *, "DEBUG: myrank, x,y,z = ", myrank, x, y, z, xi, eta, gamma
++
+       ! store xi,eta,gamma and x,y,z of point found
+       xi_subset(isource_in_this_subset) = xi
+       eta_subset(isource_in_this_subset) = eta
+       gamma_subset(isource_in_this_subset) = gamma
+ 
+-      xyz_found(1,isource) = x
+-      xyz_found(2,isource) = y
+-      xyz_found(3,isource) = z
++      xyz_found_source(1,isource) = x
++      xyz_found_source(2,isource) = y
++      xyz_found_source(3,isource) = z
+ 
+       xyz_found_subset(1,isource_in_this_subset) = x
+       xyz_found_subset(2,isource_in_this_subset) = y
+@@ -413,7 +485,7 @@
+                           xi_subset,eta_subset,gamma_subset, &
+                           final_distance_subset, &
+                           NSOURCES,ispec_selected_source,islice_selected_source, &
+-                          xyz_found, &
++                          xyz_found_source, & !! KTAO xyz_found, &
+                           xi_source,eta_source,gamma_source, &
+                           final_distance)
+ 
+@@ -429,6 +501,11 @@
+   ! output source infos
+   if (myrank == 0) then
+ 
++      if (USE_ECEF_COORDINATE) then
++        write(IMAIN,*)
++        write(IMAIN,*) 'USE_ECEF_COORDINATE = ', USE_ECEF_COORDINATE
++      endif
++
+     ! loop on all the sources
+     do isource = 1,NSOURCES
+ 
+@@ -439,17 +516,22 @@
+       write(IMAIN,*) '  source located in slice ',islice_selected_source(isource)
+       write(IMAIN,*) '                 in element ',ispec_selected_source(isource)
+       write(IMAIN,*)
+-      write(IMAIN,*) '  at xi,eta,gamma coordinates = ', &
+-                     sngl(xi_source(isource)),sngl(eta_source(isource)),sngl(gamma_source(isource))
+-      write(IMAIN,*) '  at (x,y,z)                  = ', sngl(xyz_found(1,isource)), &
+-                     sngl(xyz_found(2,isource)),sngl(xyz_found(3,isource))
++      write(IMAIN,*) '  at xi,eta,gamma coordinates = ', & 
++                      sngl(xi_source(isource)),          &
++                      sngl(eta_source(isource)),         &
++                      sngl(gamma_source(isource))
++      write(IMAIN,*) '  at (x,y,z)                  = ', &
++                      sngl(xyz_found_source(1,isource)), &
++                      sngl(xyz_found_source(2,isource)), &
++                      sngl(xyz_found_source(3,isource))
+       write(IMAIN,*)
+       ! different output for force point sources
+       if (USE_FORCE_POINT_SOURCE) then
+         write(IMAIN,*) '  using force point source:'
+-        write(IMAIN,*) '    component of direction vector in East direction: ',sngl(comp_dir_vect_source_E(isource))
+-        write(IMAIN,*) '    component of direction vector in North direction: ',sngl(comp_dir_vect_source_N(isource))
+-        write(IMAIN,*) '    component of direction vector in Vertical direction: ',sngl(comp_dir_vect_source_Z_UP(isource))
++        write(IMAIN,*) '    component of direction vector in ECEF: ',sngl(comp_dir_vect_source(:, isource))
++        ! write(IMAIN,*) '    component of direction vector in East direction: ',sngl(comp_dir_vect_source_E(isource))
++        ! write(IMAIN,*) '    component of direction vector in North direction: ',sngl(comp_dir_vect_source_N(isource))
++        ! write(IMAIN,*) '    component of direction vector in Vertical direction: ',sngl(comp_dir_vect_source_Z_UP(isource))
+         !write(IMAIN,*) '  i index of source in that element: ',nint(xi_source(isource))
+         !write(IMAIN,*) '  j index of source in that element: ',nint(eta_source(isource))
+         !write(IMAIN,*) '  k index of source in that element: ',nint(gamma_source(isource))
+@@ -462,6 +544,12 @@
+       else
+         ! moment tensor
+         write(IMAIN,*) '  using moment tensor source'
++        write(IMAIN,*) '    Mxx: ',Mxx(isource)
++        write(IMAIN,*) '    Myy: ',Myy(isource)
++        write(IMAIN,*) '    Mzz: ',Mzz(isource)
++        write(IMAIN,*) '    Mxy: ',Mxy(isource)
++        write(IMAIN,*) '    Mxz: ',Mxz(isource)
++        write(IMAIN,*) '    Myz: ',Myz(isource)
+       endif
+       write(IMAIN,*)
+ 
+@@ -582,14 +670,14 @@
+       write(IMAIN,*)
+ 
+       ! writes out actual source position to VTK file
+-      write(IOUT_VTK,'(3e18.6)') sngl(xyz_found(1,isource)), &
+-                                 sngl(xyz_found(2,isource)), &
+-                                 sngl(xyz_found(3,isource))
++      write(IOUT_VTK,'(3e18.6)') sngl(xyz_found_source(1,isource)), &
++                                 sngl(xyz_found_source(2,isource)), &
++                                 sngl(xyz_found_source(3,isource))
+ 
+       ! get latitude, longitude and depth of the source that will be used
+-      call xyz_2_rlatlon_dble(xyz_found(1,isource), &
+-                              xyz_found(2,isource), &
+-                              xyz_found(3,isource), &
++      call xyz_2_rlatlon_dble(xyz_found_source(1,isource), &
++                              xyz_found_source(2,isource), &
++                              xyz_found_source(3,isource), &
+                               r_found,lat,lon,ELLIPTICITY_VAL)
+ 
+       ! brings longitude range ([0,360] by default) to source longitude range for display
+@@ -598,17 +686,31 @@
+       write(IMAIN,*)
+       write(IMAIN,*) '  original (requested) position of the source:'
+       write(IMAIN,*)
+-      write(IMAIN,*) '        latitude: ',srclat(isource)
+-      write(IMAIN,*) '       longitude: ',srclon(isource)
+-      write(IMAIN,*) '           depth: ',srcdepth(isource),' km'
+-      write(IMAIN,*)
++      !!KTAO: modifies
++      if (USE_ECEF_COORDINATE) then
++        write(IMAIN,*) '            x(m): ',srclat(isource)
++        write(IMAIN,*) '            y(m): ',srclon(isource)
++        write(IMAIN,*) '            z(m): ',srcdepth(isource)
++      else
++        write(IMAIN,*) '        latitude: ',srclat(isource)
++        write(IMAIN,*) '       longitude: ',srclon(isource)
++        write(IMAIN,*) '           depth: ',srcdepth(isource),' km'
++      endif
++        write(IMAIN,*)
+ 
+       ! compute real position of the source
+       write(IMAIN,*) '  position of the source that will be used:'
+       write(IMAIN,*)
+-      write(IMAIN,*) '        latitude: ',lat
+-      write(IMAIN,*) '       longitude: ',lon
+-      write(IMAIN,*) '           depth: ',(rsurface_source(isource)-r_found)*R_PLANET/1000.0d0,' km'
++      !!KTAO: modifies
++      if (USE_ECEF_COORDINATE) then
++        write(IMAIN,*) '            x(m): ', xyz_found_source(1,isource)*R_PLANET
++        write(IMAIN,*) '            y(m): ', xyz_found_source(2,isource)*R_PLANET
++        write(IMAIN,*) '            z(m): ', xyz_found_source(3,isource)*R_PLANET
++      else
++        write(IMAIN,*) '        latitude: ',lat
++        write(IMAIN,*) '       longitude: ',lon
++        write(IMAIN,*) '           depth: ',(rsurface_source(isource)-r_found)*R_PLANET/1000.0d0,' km'
++      endif
+       write(IMAIN,*)
+ 
+       ! display error in location estimate
+@@ -628,9 +730,9 @@
+ 
+       ! stores location for VTK visualization
+       if (isource == 1) then
+-        vtkdata_source_x = sngl(xyz_found(1,isource))
+-        vtkdata_source_y = sngl(xyz_found(2,isource))
+-        vtkdata_source_z = sngl(xyz_found(3,isource))
++        vtkdata_source_x = sngl(xyz_found_source(1,isource))
++        vtkdata_source_y = sngl(xyz_found_source(2,isource))
++        vtkdata_source_z = sngl(xyz_found_source(3,isource))
+       endif
+ 
+     enddo ! end of loop on all the sources
+@@ -678,6 +780,8 @@
+   call bcast_all_dp(eta_source,NSOURCES)
+   call bcast_all_dp(gamma_source,NSOURCES)
+ 
++  call bcast_all_dp(xyz_found_source, NDIM*NSOURCES)
++
+   ! Broadcast magnitude and scalar moment to all processers
+   call bcast_all_singledp(M0)
+   call bcast_all_singledp(Mw)
+@@ -691,7 +795,8 @@
+   ! free temporary arrays
+   deallocate(srclat,srclon,srcdepth,rsurface_source)
+   deallocate(moment_tensor)
+-  deallocate(xyz_found,final_distance)
++  ! deallocate(xyz_found,final_distance)
++  deallocate(final_distance)
+ 
+   ! synchronizes to get right timing
+   call synchronize_all()
+@@ -718,7 +823,7 @@
+   subroutine read_source_locations(srclat,srclon,srcdepth,moment_tensor)
+ 
+   use constants, only: &
+-    myrank
++    myrank, NDIM
+ 
+   use specfem_par, only: &
+     DT,NSOURCES,tshift_src,hdur,min_tshift_src_original
+@@ -726,7 +831,8 @@
+   ! forces
+   use specfem_par, only: &
+     USE_FORCE_POINT_SOURCE,force_stf,factor_force_source, &
+-    comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP
++    comp_dir_vect_source  !!KTAO
++    ! comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP
+ 
+   implicit none
+ 
+@@ -757,14 +863,15 @@
+       call get_force(tshift_src,hdur, &
+                      srclat,srclon,srcdepth,DT,NSOURCES, &
+                      min_tshift_src_original,force_stf,factor_force_source, &
+-                     comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP)
++                     comp_dir_vect_source) !_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP)
+     endif
+     ! broadcasts specific point force infos
+     call bcast_all_i(force_stf,NSOURCES)
+     call bcast_all_dp(factor_force_source,NSOURCES)
+-    call bcast_all_dp(comp_dir_vect_source_E,NSOURCES)
+-    call bcast_all_dp(comp_dir_vect_source_N,NSOURCES)
+-    call bcast_all_dp(comp_dir_vect_source_Z_UP,NSOURCES)
++    call bcast_all_dp(comp_dir_vect_source,NDIM*NSOURCES) !!KTAO
++    ! call bcast_all_dp(comp_dir_vect_source_E,NSOURCES)
++    ! call bcast_all_dp(comp_dir_vect_source_N,NSOURCES)
++    ! call bcast_all_dp(comp_dir_vect_source_Z_UP,NSOURCES)
+   else
+     ! CMT moment tensors
+     if (myrank == 0) then
+@@ -773,6 +880,8 @@
+                    tshift_src,hdur, &
+                    srclat,srclon,srcdepth,moment_tensor, &
+                    DT,NSOURCES,min_tshift_src_original)
++      ! print *, "DEBUG: srclat,srclon,srcdepth = ",  srclat,srclon,srcdepth
++      ! print *, "DEBUG: moment_tensor = ", moment_tensor
+     endif
+     ! broadcast ispecific moment tensor infos
+     call bcast_all_dp(moment_tensor,6*NSOURCES)
+diff --git a/src/specfem3D/save_kernels.F90 b/src/specfem3D/save_kernels.F90
+index ca46c840..5a5f4917 100644
+--- a/src/specfem3D/save_kernels.F90
++++ b/src/specfem3D/save_kernels.F90
+@@ -2071,22 +2071,41 @@
+   implicit none
+ 
+   ! local parameters
+-  real(kind=CUSTOM_REAL) :: scale_mass
+-  integer :: irec_local
++  ! real(kind=CUSTOM_REAL) :: scale_mass
++  double precision :: scale_M !!KTAO: scale moment tensor
++  integer :: irec_local, irec_glob
+   character(len=MAX_STRING_LEN) :: outputname
+ 
+   ! scaling factor
+-  scale_mass = real(RHOAV * (R_EARTH**3),kind=CUSTOM_REAL)
++  ! scale_mass = real(RHOAV * (R_EARTH**3),kind=CUSTOM_REAL)
++  scale_M = RHOAV * (R_PLANET**5) * PI * GRAV * RHOAV !!KTAO: this value overflow single precision
++
++  !!KTAO: the dimension of objective function is ignored
++  !!KTAO: additional * scale_disp is added to account for adjoint source which is assumed not non-dimensionalized
+ 
+   ! computes derivatives
+   do irec_local = 1, nrec_local
+-    ! rotate and scale the location derivatives to correspond to dn,de,dz
+-    sloc_der(:,irec_local) = real(matmul(transpose(nu_source(:,:,irec_local)),sloc_der(:,irec_local)) &
+-                                  * scale_displ * scale_t,kind=CUSTOM_REAL)
++    
++    !KTAO: handle USE_ECEF_COORDINATE 
++    if (USE_ECEF_COORDINATE) then
++
++        !sloc_der(:,irec_local) = real(sloc_der(:,irec_local) / scale_displ * scale_displ, kind=CUSTOM_REAL) !KTAO: meters
++        sloc_der(:,irec_local) = real(sloc_der(:,irec_local), kind=CUSTOM_REAL) !KTAO: meters
++    
++        moment_der(:,:,irec_local) = real(moment_der(:,:,irec_local) / scale_M * scale_displ, kind=CUSTOM_REAL) !KTAO: N*m
++
++    else
+ 
+-    ! rotate scale the moment derivatives to correspond to M[n,e,z][n,e,z]
+-    moment_der(:,:,irec_local) = real(matmul(matmul(transpose(nu_source(:,:,irec_local)),moment_der(:,:,irec_local)), &
+-               nu_source(:,:,irec_local)) * scale_t ** 3 / scale_mass,kind=CUSTOM_REAL)
++      ! rotate and scale the location derivatives to correspond to dn,de,dz
++      sloc_der(:,irec_local) = real(matmul(transpose(nu_source(:,:,irec_local)),sloc_der(:,irec_local)) &
++                                    , kind=CUSTOM_REAL)
++                                    !/ scale_displ, kind=CUSTOM_REAL)
++
++      ! rotate scale the moment derivatives to correspond to M[n,e,z][n,e,z]
++      moment_der(:,:,irec_local) = real(matmul(matmul(transpose(nu_source(:,:,irec_local)),moment_der(:,:,irec_local)), &
++                 nu_source(:,:,irec_local)) / scale_M * scale_displ, kind=CUSTOM_REAL)
++
++    endif
+ 
+     ! *nu_source* is the rotation matrix from ECEF to local N-E-UP as defined in src/specfem3D/locate_sources.f90
+ 
+@@ -2105,8 +2124,8 @@
+ ! which is in the opposite sense from the transformation of M.
+ 
+     ! derivatives for time shift and hduration
+-    stshift_der(irec_local) = stshift_der(irec_local) * real(scale_displ**2,kind=CUSTOM_REAL)
+-    shdur_der(irec_local) = shdur_der(irec_local) * real(scale_displ**2,kind=CUSTOM_REAL)
++    stshift_der(irec_local) = stshift_der(irec_local) / scale_t * scale_displ !* real(scale_displ**2,kind=CUSTOM_REAL)
++    shdur_der(irec_local) = shdur_der(irec_local) / scale_t * scale_displ ! * real(scale_displ**2,kind=CUSTOM_REAL)
+   enddo
+ 
+   ! writes out kernels to file
+@@ -2118,30 +2137,72 @@
+   else
+     ! kernel file output
+     do irec_local = 1, nrec_local
++
++      irec_glob = number_receiver_global(irec_local) !KTAO: add
++
+       write(outputname,'(a,i6.6)') trim(OUTPUT_FILES)//'/src_frechet.',number_receiver_global(irec_local)
+       open(unit=IOUT,file=trim(outputname),status='unknown',action='write')
+-      !
+-      ! r -> z, theta -> -n, phi -> e, plus factor 2 for Mrt,Mrp,Mtp, and 1e-7 to dyne.cm
+-      !  Mrr =  Mzz
+-      !  Mtt =  Mnn
+-      !  Mpp =  Mee
+-      !  Mrt = -Mzn
+-      !  Mrp =  Mze
+-      !  Mtp = -Mne
+-      ! for consistency, location derivatives are in the order of [Xr,Xt,Xp]
+-      ! minus sign for sloc_der(3,irec_local) to get derivative for depth instead of radius
+-      write(IOUT,'(g16.5)') moment_der(3,3,irec_local) * 1e-7
+-      write(IOUT,'(g16.5)') moment_der(1,1,irec_local) * 1e-7
+-      write(IOUT,'(g16.5)') moment_der(2,2,irec_local) * 1e-7
+-      write(IOUT,'(g16.5)') -2*moment_der(1,3,irec_local) * 1e-7
+-      write(IOUT,'(g16.5)') 2*moment_der(2,3,irec_local) * 1e-7
+-      write(IOUT,'(g16.5)') -2*moment_der(1,2,irec_local) * 1e-7
+-      write(IOUT,'(g16.5)') sloc_der(2,irec_local)
+-      write(IOUT,'(g16.5)') sloc_der(1,irec_local)
+-      write(IOUT,'(g16.5)') -sloc_der(3,irec_local)
+-
+-      write(IOUT,'(g16.5)') stshift_der(irec_local)
+-      write(IOUT,'(g16.5)') shdur_der(irec_local)
++
++      if (USE_ECEF_COORDINATE) then !KTAO: add case for USE_ECEF_COORDINATE
++        ! tshift_cmt, hdur_gaussian are not non-dimensionalized
++        write(IOUT,'(E16.7,2X,E16.7,2X,"# t0(s)    dChi/dt0")') &
++            tshift_src(irec_glob), stshift_der(irec_local)
++
++        write(IOUT,'(E16.7,2X,E16.7,2X,"# tau(s)   dChi/dtau")') &
++            hdur_Gaussian(irec_glob), shdur_der(irec_local)
++
++        write(IOUT,'(E16.7,2X,E16.7,2X,"# x(m)     dChi/dx")') &
++            xyz_found_source(1,irec_glob)*scale_displ, sloc_der(1,irec_local)
++
++        write(IOUT,'(E16.7,2X,E16.7,2X,"# y(m)     dChi/dy")') &
++            xyz_found_source(2,irec_glob)*scale_displ, sloc_der(2,irec_local)
++
++        write(IOUT,'(E16.7,2X,E16.7,2X,"# z(m)     dChi/dz")') &
++            xyz_found_source(3,irec_glob)*scale_displ, sloc_der(3,irec_local)
++
++        write(IOUT,'(E16.7,2X,E16.7,2X,"# Mxx(N*m) dChi/dMxx")') &
++            Mxx(irec_glob)*scale_M, moment_der(1,1,irec_local)
++
++        write(IOUT,'(E16.7,2X,E16.7,2X,"# Myy(N*m) dChi/dMyy")') &
++            Myy(irec_glob)*scale_M, moment_der(2,2,irec_local)
++
++        write(IOUT,'(E16.7,2X,E16.7,2X,"# Mzz(N*m) dChi/dMzz")') &
++            Mzz(irec_glob)*scale_M, moment_der(3,3,irec_local)
++
++        write(IOUT,'(E16.7,2X,E16.7,2X,"# Mxy(N*m) dChi/dMxy")') &
++            Mxy(irec_glob)*scale_M, 2*moment_der(1,2,irec_local)
++
++        write(IOUT,'(E16.7,2X,E16.7,2X,"# Mxz(N*m) dChi/dMxz")') &
++            Mxz(irec_glob)*scale_M, 2*moment_der(1,3,irec_local)
++
++        write(IOUT,'(E16.7,2X,E16.7,2X,"# Myz(N*m) dChi/dMyz")') &
++            Myz(irec_glob)*scale_M, 2*moment_der(2,3,irec_local)
++
++      else
++        !
++        ! r -> z, theta -> -n, phi -> e, plus factor 2 for Mrt,Mrp,Mtp, and 1e-7 to dyne.cm
++        !  Mrr =  Mzz
++        !  Mtt =  Mnn
++        !  Mpp =  Mee
++        !  Mrt = -Mzn
++        !  Mrp =  Mze
++        !  Mtp = -Mne
++        ! for consistency, location derivatives are in the order of [Xr,Xt,Xp]
++        ! minus sign for sloc_der(3,irec_local) to get derivative for depth instead of radius
++        write(IOUT,'(g16.5)') moment_der(3,3,irec_local) * 1e-7
++        write(IOUT,'(g16.5)') moment_der(1,1,irec_local) * 1e-7
++        write(IOUT,'(g16.5)') moment_der(2,2,irec_local) * 1e-7
++        write(IOUT,'(g16.5)') -2*moment_der(1,3,irec_local) * 1e-7
++        write(IOUT,'(g16.5)') 2*moment_der(2,3,irec_local) * 1e-7
++        write(IOUT,'(g16.5)') -2*moment_der(1,2,irec_local) * 1e-7
++        write(IOUT,'(g16.5)') sloc_der(2,irec_local)
++        write(IOUT,'(g16.5)') sloc_der(1,irec_local)
++        write(IOUT,'(g16.5)') -sloc_der(3,irec_local)
++
++        write(IOUT,'(g16.5)') stshift_der(irec_local)
++        write(IOUT,'(g16.5)') shdur_der(irec_local)
++
++      endif
+ 
+       close(IOUT)
+     enddo
+diff --git a/src/specfem3D/setup_sources_receivers.f90 b/src/specfem3D/setup_sources_receivers.f90
+index 9fe5b0b5..56028827 100644
+--- a/src/specfem3D/setup_sources_receivers.f90
++++ b/src/specfem3D/setup_sources_receivers.f90
+@@ -577,6 +577,8 @@
+ 
+   subroutine setup_sources()
+ 
++  use constants, only: NDIM
++
+   use specfem_par
+   use specfem_par_crustmantle
+   use specfem_par_movie
+@@ -606,13 +608,16 @@
+            Mzz(NSOURCES), &
+            Mxy(NSOURCES), &
+            Mxz(NSOURCES), &
+-           Myz(NSOURCES),stat=ier)
++           Myz(NSOURCES), &
++           xyz_found_source(NDIM,NSOURCES), & !!KTAO: add
++           stat=ier)
+   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
+   ! initializes arrays
+   islice_selected_source(:) = -1
+   ispec_selected_source(:) = 0
+   Mxx(:) = 0.d0; Myy(:) = 0.d0; Mzz(:) = 0.d0
+   Mxy(:) = 0.d0; Mxz(:) = 0.d0; Myz(:) = 0.d0
++  xyz_found_source(:,:) = 0.d0 !!KTAO: add
+ 
+   allocate(xi_source(NSOURCES), &
+            eta_source(NSOURCES), &
+@@ -633,15 +638,18 @@
+   if (USE_FORCE_POINT_SOURCE) then
+     allocate(force_stf(NSOURCES), &
+              factor_force_source(NSOURCES), &
+-             comp_dir_vect_source_E(NSOURCES), &
+-             comp_dir_vect_source_N(NSOURCES), &
+-             comp_dir_vect_source_Z_UP(NSOURCES),stat=ier)
++             comp_dir_vect_source(NDIM, NSOURCES), & !!KTAO
++             ! comp_dir_vect_source_E(NSOURCES), &
++             ! comp_dir_vect_source_N(NSOURCES), &
++             ! comp_dir_vect_source_Z_UP(NSOURCES), &
++             stat=ier)
+     if (ier /= 0) stop 'error allocating arrays for force point sources'
+     force_stf(:) = 0
+     factor_force_source(:) = 0.d0
+-    comp_dir_vect_source_E(:) = 0.d0
+-    comp_dir_vect_source_N(:) = 0.d0
+-    comp_dir_vect_source_Z_UP(:) = 0.d0
++    ! comp_dir_vect_source_E(:) = 0.d0
++    ! comp_dir_vect_source_N(:) = 0.d0
++    ! comp_dir_vect_source_Z_UP(:) = 0.d0
++    comp_dir_vect_source(:, :) = 0.d0 !!KTAO
+   endif
+ 
+   ! initialize Berkeley stf if needed (for ucb heaviside)
+@@ -675,11 +683,14 @@
+ 
+   ! count number of sources located in this slice
+   nsources_local = 0
+-  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+-    do isource = 1,NSOURCES
+-      if (myrank == islice_selected_source(isource)) nsources_local = nsources_local + 1
+-    enddo
+-  endif
++  !!KTAO modified 
++  !!KTAO SIMULATION_TYPE == 2: nsources_local is needed otherwise error in prepare_gpu:748
++  !!KTAO TODO: futher check needed
++  ! if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
++  do isource = 1,NSOURCES
++    if (myrank == islice_selected_source(isource)) nsources_local = nsources_local + 1
++  enddo
++  ! endif
+ 
+   ! determines number of times steps for simulation
+   call setup_timesteps()
+@@ -753,8 +764,12 @@
+     endif
+   endif
+ 
+-  ! convert the half duration for triangle STF to the one for Gaussian STF
+-  hdur_Gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
++  if (USE_ECEF_COORDINATE) then
++    hdur_Gaussian(:) = hdur(:) !! KTAO: CMTSOLUTION_ECEF uses hdur_Gaussian directly
++  else
++    ! convert the half duration for triangle STF to the one for Gaussian STF
++    hdur_Gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
++  endif
+ 
+   ! define t0 as the earliest start time
+   if (USE_FORCE_POINT_SOURCE) then
+@@ -794,7 +809,13 @@
+       t0 = 0.d0
+     else
+       ! (based on Heaviside functions)
+-      t0 = - 1.5d0 * minval( tshift_src(:) - hdur(:) )
++
++      !        |<---1.5*hdur----|           (o: PDE origin time from the first line of CMTSOLUTION)
++      ! -------|--o----b--------|----> time (b: smallest source time shift in CMTSOLUTION, b-o = min_tshift_src_original)
++      !        |<--t0--|---m--->| (m: tshift_src = time shift in CMTSOLUTION - min_tshift_src_original)
++
++      ! t0 = - 1.5d0 * minval( tshift_src(:) - hdur(:) )  !!KTAO changed
++      t0 = - minval(tshift_src(:) - 1.5d0 * hdur(:))  !!KTAO
+     endif
+   endif
+ 
+@@ -830,6 +851,13 @@
+     endif
+ 
+     ! checks if automatically set t0 is too small
++    !
++    !!KTAO
++    !                                                     c: earliest cmt origin time
++    ! -----------------------p-----c--------------> time  p: PDE origin time from the first line of CMTSOLUTION)
++    ! auto t0: |<-----t0-----------|--tshift_src--> cmt   tshift_src: origin time(s) relative to t_c
++    ! USER_T0: |<-----t0-----|--------tshift_src--> cmt   tshift_src: origin time(s) relative to t_p
++
+     ! note: min_tshift_src_original can be a positive or negative time shift (minimum from all tshift)
+     if (t0 <= USER_T0 + min_tshift_src_original) then
+       ! by default, tshift_src(:) holds relative time shifts with a minimum time shift set to zero
+@@ -837,6 +865,8 @@
+       ! according to their absolute time shift
+       tshift_src(:) = tshift_src(:) + min_tshift_src_original
+ 
++      min_tshift_src_original = 0  !!KTAO reset min_tshift_src_original to 0    
++
+       ! sets new simulation start time such that
+       ! simulation starts at t = - t0 = - USER_T0
+       t0 = USER_T0
+@@ -1545,9 +1575,10 @@
+         !       (defined in src/specfem3D/locate_sources.f90)
+ 
+         ! length of component vector
+-        norm = dsqrt( comp_dir_vect_source_E(isource)**2 &
+-                    + comp_dir_vect_source_N(isource)**2 &
+-                    + comp_dir_vect_source_Z_UP(isource)**2 )
++        norm = dsqrt(sum(comp_dir_vect_source(:, isource)**2)) !!KTAO
++        ! norm = dsqrt( comp_dir_vect_source_E(isource)**2 &
++        !             + comp_dir_vect_source_N(isource)**2 &
++        !             + comp_dir_vect_source_Z_UP(isource)**2 )
+ 
+         ! checks norm of component vector
+         if (norm < TINYVAL) then
+@@ -1555,12 +1586,15 @@
+         endif
+ 
+         ! normalizes given component vector
+-        comp_x = comp_dir_vect_source_N(isource) / norm      ! N/E component changed compared to Cartesian version
+-        comp_y = comp_dir_vect_source_E(isource) / norm
+-        comp_z = comp_dir_vect_source_Z_UP(isource) / norm
++        comp_x = comp_dir_vect_source(1, isource) / norm  !!KTAO
++        comp_y = comp_dir_vect_source(2, isource) / norm  !!KTAO
++        comp_z = comp_dir_vect_source(3, isource) / norm  !!KTAO
++        ! comp_x = comp_dir_vect_source_E(isource) / norm      !!KTAO: modified so x->E, y->N ! N/E component changed compared to Cartesian version
++        ! comp_y = comp_dir_vect_source_N(isource) / norm
++        ! comp_z = comp_dir_vect_source_Z_UP(isource) / norm
+ 
+         call compute_arrays_source_forcesolution(sourcearray,hxis,hetas,hgammas,factor_source, &
+-                                                 comp_x,comp_y,comp_z,nu_source(:,:,isource))
++                                                 comp_x,comp_y,comp_z) !,nu_source(:,:,isource), USE_ECEF_COORDINATE)
+ 
+       else
+         ! use of CMTSOLUTION files
+diff --git a/src/specfem3D/specfem3D_par.F90 b/src/specfem3D/specfem3D_par.F90
+index c034fe3c..98102a2f 100644
+--- a/src/specfem3D/specfem3D_par.F90
++++ b/src/specfem3D/specfem3D_par.F90
+@@ -308,12 +308,14 @@ module specfem_par
+   integer :: nsources_local
+   integer, dimension(:), allocatable :: islice_selected_source,ispec_selected_source
+   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sourcearrays
+-  double precision, dimension(:,:,:) ,allocatable:: nu_source
++  double precision, dimension(:,:,:), allocatable :: nu_source
+ 
+   double precision, dimension(:), allocatable :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+   double precision, dimension(:), allocatable :: xi_source,eta_source,gamma_source
+   double precision, dimension(:), allocatable :: tshift_src,hdur,hdur_Gaussian
+ 
++  double precision, dimension(:,:), allocatable :: xyz_found_source !! KTAO: add
++
+   double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,Mw,M0
+   double precision :: t0
+   double precision :: min_tshift_src_original
+@@ -326,9 +328,10 @@ module specfem_par
+   ! parameters for a force source located exactly at a grid point
+   integer, dimension(:), allocatable :: force_stf
+   double precision, dimension(:), allocatable :: factor_force_source
+-  double precision, dimension(:), allocatable :: comp_dir_vect_source_E
+-  double precision, dimension(:), allocatable :: comp_dir_vect_source_N
+-  double precision, dimension(:), allocatable :: comp_dir_vect_source_Z_UP
++  ! double precision, dimension(:), allocatable :: comp_dir_vect_source_E
++  ! double precision, dimension(:), allocatable :: comp_dir_vect_source_N
++  ! double precision, dimension(:), allocatable :: comp_dir_vect_source_Z_UP
++  double precision, dimension(:, :), allocatable :: comp_dir_vect_source !!KTAO
+ 
+   !-----------------------------------------------------------------
+   ! receivers
+diff --git a/src/specfem3D/write_output_SAC.f90 b/src/specfem3D/write_output_SAC.f90
+index ab3fc14b..8adfd86b 100644
+--- a/src/specfem3D/write_output_SAC.f90
++++ b/src/specfem3D/write_output_SAC.f90
+@@ -41,11 +41,12 @@
+           OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+           MODEL,OUTPUT_FILES, &
+           NTSTEP_BETWEEN_OUTPUT_SAMPLE, &
+-          nlength_seismogram
++          nlength_seismogram, &
++          tshift_src, min_tshift_src_original  !!KTAO add
+ 
+   use specfem_par, only: &
+           yr => yr_SAC,jda => jda_SAC,ho => ho_SAC,mi => mi_SAC,sec => sec_SAC, &
+-          tshift_src => t_cmt_SAC,t_shift => t_shift_SAC, &
++          ! tshift_src => t_cmt_SAC,t_shift => t_shift_SAC, &
+           elat => elat_SAC,elon => elon_SAC,depth => depth_SAC, &
+           event_name => event_name_SAC,cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC, &
+           cmt_depth => cmt_depth_SAC,cmt_hdur => cmt_hdur_SAC
+@@ -64,6 +65,7 @@
+ 
+   ! local parameters
+   double precision :: btime
++  double precision :: MSEC ! KTAO: add
+   real, dimension(nlength_seismogram) :: tmp
+   integer :: time_sec,isample
+   character(len=MAX_STRING_LEN) :: sisname_2
+@@ -138,6 +140,9 @@
+ ! at. It has no affect on timing per se.  You'll really notice its effect if
+ ! you read in two traces from different dates.
+ 
++!!KTAO The follwoing comments are wrong, 
++!!KTAO B,E,O time markers are always relative to the reference time (defined as nzyear,nzjday,nzhour,nzsec,nzmsec)
++
+ ! Reference markers, (e.g. the o-marker) are not defined relative to this time,
+ ! but rather to the begin time (B) of the seismo, so if you adjust B, you also
+ ! need to adjust KZTIME to match. I would suggest experimenting with this until
+@@ -168,11 +173,25 @@
+   ODELTA = undef       ! increment from delta
+ 
+   ! begin time
+-  btime = (seismo_offset)*DT - t0 + tshift_src
++  ! print *, "DEBUG: myrank, t0, tshift_src, min_tshift_src_original = ", myrank, t0, tshift_src, min_tshift_src_original
++
++  !!KTAO
++  !                                                 c: earliest cmt origin time
++  ! -----------------------p-----c--------> time    p: PDE origin time from the first line of CMTSOLUTION
++  ! USER_T0: |<-----t0-----|--------tshift_src--->  tshift_src: cmt origin time(s) relative to t_p
++  ! auto t0: |<---------t0-------|--tshift_src--->  tshift_src: cmt origin time(s) relative to t_c
++  ! 
++  ! SAC gmt time headers is set to t_c for auto t0, and t_p for USER_T0 
++  ! (upto millisecond precision, b,o markers are adjusted to account for the remaining sub-milliseconds)
++  ! SAC o time is always set to t_c
++  ! min_tshift_src_original = t_c - t_p for auto t0, and 0 for USTER_T0
++  ! so tshift_src + min_tshift_src_original are always be the cmt origin times relative to t_p
++
++  btime = (seismo_offset)*DT - t0
+ 
+   B      = sngl(btime) ! [REQUIRED]
+   E      = BYSAC       ! [REQUIRED]
+-  O      = 0  !
++  O      = sngl(minval(tshift_src))  !!KTAO
+   A      = undef  !###
+ 
+   !station values:
+@@ -272,15 +291,28 @@
+   NZMIN  = mi
+ 
+   ! adds time-shift to get the CMT time in the headers as origin time of events
+-  NZSEC  = int(sec+t_shift)
+-  NZMSEC = int((sec+t_shift-int(sec+t_shift))*1000)
+-
++  ! NZSEC  = int(sec+t_shift)
++  NZSEC = int(sec + min_tshift_src_original) !!KTAO: min_tshift_src_original=0 when USER_T0
++  !<< KTAO: modified to account for sub-milliseconds
++  MSEC = (sec + min_tshift_src_original - NZSEC)*1000
++  !!KTAO: deal with negative (sec+min_tshift_src_original) value, so MSEC > 0
++  if (MSEC < 0) then
++    NZSEC = NZSEC - 1
++    MSEC = MSEC + 1000
++  endif
++  ! NZMSEC = int((sec+t_shift-int(sec+t_shift))*1000)
++  NZMSEC = int(MSEC)
++  !!KTAO: B,O are adjusted to account for sub-milliseconds which cannot be represented in SAC gmt time
++  B = B + sngl((MSEC-NZMSEC)/1000.0)
++  O = O + sngl((MSEC-NZMSEC)/1000.0)
++  
+   !NZSEC  =int(sec)
+   !NZMSEC =int((sec-int(sec))*1000)
+ 
+   ! Adjust event time and date after t_shift is added
+-  if (NZSEC >= 60) then
+-   time_sec = jda*24*3600 + ho*3600 + mi*60 + int(sec+t_shift)
++  if (NZSEC >= 60 .or. NZSEC < 0) then !!KTAO also deal with case NZSEC < 0
++   ! time_sec = jda*24*3600 + ho*3600 + mi*60 + int(sec+t_shift)
++   time_sec = jda*24*3600 + ho*3600 + mi*60 + NZSEC !!KTAO
+    NZJDAY   = int(time_sec/(24*3600))
+    NZHOUR   = int(mod(time_sec,24*3600)/3600)
+    NZMIN    = int(mod(time_sec,3600)/60)
