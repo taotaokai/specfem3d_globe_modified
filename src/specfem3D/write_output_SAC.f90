@@ -185,7 +185,7 @@
   ! (upto millisecond precision, b,o markers are adjusted to account for the remaining sub-milliseconds)
   ! SAC o time is always set to t_c
   ! min_tshift_src_original = t_c - t_p for auto t0, and 0 for USTER_T0
-  ! so tshift_src + min_tshift_src_original are always be the cmt origin times relative to t_p
+  ! so tshift_src + min_tshift_src_original are always the cmt origin times relative to t_p
 
   btime = (seismo_offset)*DT - t0
 
