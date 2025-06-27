@@ -506,22 +506,23 @@
   ! (where NER values are set empirically for a good mesh design)
   NER(1) = NER_CRUST
   NER(2) = NER_80_MOHO
-  NER(3) = NER_220_80
-  NER(4) = NER_400_220
-  NER(5) = NER_600_400
-  NER(6) = NER_670_600
-  NER(7) = NER_771_670
-  ! distributes NER_TOPDDOUBLEPRIME_771 onto two element layer regions depending on vertical sizes of layers
-  NER(8) = max(int( NER_TOPDDOUBLEPRIME_771 * (radius(8) - radius(9)) / (radius(8) - radius(10)) ), 1)
-  NER(9) = NER_TOPDDOUBLEPRIME_771 - NER(8)
-  NER(10) = NER_CMB_TOPDDOUBLEPRIME
-  ! distributes NER_OUTER_CORE onto two element layer regions depending on vertical sizes of layers
-  NER(11) = max(int( NER_OUTER_CORE * (radius(11) - radius(12)) / (radius(11) - radius(13)) ), 1)
-  NER(12) = NER_OUTER_CORE - NER(11)
-  NER(13) = NER_TOP_CENTRAL_CUBE_ICB
+  !> KTAO commented out, so auto_ner can start from 1
+  ! NER(3) = NER_220_80
+  ! NER(4) = NER_400_220
+  ! NER(5) = NER_600_400
+  ! NER(6) = NER_670_600
+  ! NER(7) = NER_771_670
+  ! ! distributes NER_TOPDDOUBLEPRIME_771 onto two element layer regions depending on vertical sizes of layers
+  ! NER(8) = max(int( NER_TOPDDOUBLEPRIME_771 * (radius(8) - radius(9)) / (radius(8) - radius(10)) ), 1)
+  ! NER(9) = NER_TOPDDOUBLEPRIME_771 - NER(8)
+  ! NER(10) = NER_CMB_TOPDDOUBLEPRIME
+  ! ! distributes NER_OUTER_CORE onto two element layer regions depending on vertical sizes of layers
+  ! NER(11) = max(int( NER_OUTER_CORE * (radius(11) - radius(12)) / (radius(11) - radius(13)) ), 1)
+  ! NER(12) = NER_OUTER_CORE - NER(11)
+  ! NER(13) = NER_TOP_CENTRAL_CUBE_ICB
 
   ! debug
-  !print *,'debug: input NER:',NER(:)
+  print *,'debug: input NER:',NER(:)
 
   ! Find the Number of Radial Elements in a region based upon
   ! the aspect ratio of the elements
@@ -533,6 +534,7 @@
   ! Set Output arguments
   NER_CRUST                = NER(1)
   NER_80_MOHO              = NER(2)
+  ! KTAO add
   if (NER_80_MOHO < 2) then
     NER_80_MOHO            = 2
   endif

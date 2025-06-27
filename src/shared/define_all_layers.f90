@@ -201,8 +201,8 @@
       distance = abs(zval - (R_PLANET - DEPTH_SECOND_DOUBLING_OPTIMAL))
 
       ! debug
-      if (DEBUG .and. myrank == 0) &
-        print *,'debug: 2nd doubling',ielem,ner_layer,'dist/zval',distance,distance_min,zval
+      ! if (DEBUG .and. myrank == 0) &
+      !   print *,'debug: 2nd doubling',ielem,ner_layer,'dist/zval',distance,distance_min,zval
 
       ! checks if closer and sets as new depth
       if (distance < distance_min) then
@@ -254,8 +254,8 @@
       distance = abs(zval - (R_PLANET - DEPTH_THIRD_DOUBLING_OPTIMAL))
 
       ! debug
-      if (DEBUG .and. myrank == 0) &
-        print *,'debug: 3nd doubling',ielem,ner_end,'dist/zval',distance,distance_min,zval
+      ! if (DEBUG .and. myrank == 0) &
+      !   print *,'debug: 3nd doubling',ielem,ner_end,'dist/zval',distance,distance_min,zval
 
       ! checks if closer and sets as new depth
       if (distance < distance_min) then

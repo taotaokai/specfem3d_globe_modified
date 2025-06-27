@@ -41,6 +41,8 @@
   double precision :: MIN_GLL_POINT_SPACING,MIN_GLL_POINT_SPACING_NGLL5
   integer :: nex_max_auto_ner_estimate
 
+  double precision :: max_nex_per_degree !KTAO add
+
   ! initializes
   DT = 0.d0
   MIN_ATTENUATION_PERIOD = 0.d0
@@ -55,6 +57,8 @@
   !----
 
   NEX_MAX = max(NEX_XI,NEX_ETA)
+  ! KTAO add
+  max_nex_per_degree = max(NEX_XI / ANGULAR_WIDTH_XI_IN_DEGREES, NEX_ETA / ANGULAR_WIDTH_ETA_IN_DEGREES)
 
   ! to suppress the crustal layers
   ! (replaced by an extension of the mantle: R_PLANET is not modified, but no more crustal doubling)
@@ -302,7 +306,7 @@
     !   90./NEX * 111.0 / (NGLL-1) * 4 / 2.25 -> NEX = 80, NGLL = 5: T_min ~ 55.5
 
     ! sets empirical values for time step size, attenuation range (for 3 SLS) and number of element layers
-    if (NEX_MAX*multiplication_factor <= 80) then
+    if (max_nex_per_degree*multiplication_factor <= 80/90.0) then
       ! time step
       DT                       = 0.252d0
       ! attenuation period range
@@ -311,7 +315,7 @@
       ! radius of central cube
       R_CENTRAL_CUBE = 950000.d0
 
-    else if (NEX_MAX*multiplication_factor <= 96) then
+    else if (max_nex_per_degree*multiplication_factor <= 96/90.0) then
       ! time step
       ! to handle a case that Zhinan Xie found to be unstable for NEX = 96 I reduce the time step to 90% of its value here
       DT                       = 0.252d0 * 0.90d0
@@ -322,7 +326,7 @@
       R_CENTRAL_CUBE = 950000.d0
 
     ! element width =   0.5625000      degrees =    62.54715      km
-    else if (NEX_MAX*multiplication_factor <= 160) then
+    else if (max_nex_per_degree*multiplication_factor <= 160/90.0) then
       ! time step
       DT                       = 0.252d0
       ! attenuation period range
@@ -332,7 +336,7 @@
       R_CENTRAL_CUBE = 950000.d0
 
     ! element width =   0.3515625      degrees =    39.09196      km
-    else if (NEX_MAX*multiplication_factor <= 256) then
+    else if (max_nex_per_degree*multiplication_factor <= 256/90.0) then
       DT                       = 0.225d0
 
       MIN_ATTENUATION_PERIOD   = 20.d0
@@ -349,7 +353,7 @@
       R_CENTRAL_CUBE = 965000.d0
 
     ! element width =   0.2812500      degrees =    31.27357      km
-    else if (NEX_MAX*multiplication_factor <= 320) then
+    else if (max_nex_per_degree*multiplication_factor <= 320/90.0) then
       DT                       = 0.16d0
 
       MIN_ATTENUATION_PERIOD   = 15.d0
@@ -368,7 +372,7 @@
       R_CENTRAL_CUBE = 940000.d0
 
     ! element width =   0.1875000      degrees =    20.84905      km
-    else if (NEX_MAX*multiplication_factor <= 480) then
+    else if (max_nex_per_degree*multiplication_factor <= 480/90.0) then
       DT                       = 0.11d0
 
       MIN_ATTENUATION_PERIOD   = 10.d0
@@ -389,7 +393,7 @@
       R_CENTRAL_CUBE = 988000.d0
 
     ! element width =   0.1757812      degrees =    19.54598      km
-    else if (NEX_MAX*multiplication_factor <= 512) then
+    else if (max_nex_per_degree*multiplication_factor <= 512/90.0) then
       DT                       = 0.1125d0
 
       MIN_ATTENUATION_PERIOD   = 9.d0
@@ -410,7 +414,7 @@
       R_CENTRAL_CUBE = 1010000.d0
 
     ! element width =   0.1406250      degrees =    15.63679      km
-    else if (NEX_MAX*multiplication_factor <= 640) then
+    else if (max_nex_per_degree*multiplication_factor <= 640/90.0) then
       DT                       = 0.09d0
 
       MIN_ATTENUATION_PERIOD   = 8.d0
@@ -432,7 +436,7 @@
       R_CENTRAL_CUBE = 1020000.d0
 
     ! element width =   0.1041667      degrees =    11.58280      km
-    else if (NEX_MAX*multiplication_factor <= 864) then
+    else if (max_nex_per_degree*multiplication_factor <= 864/90.0) then
       DT                       = 0.0667d0
 
       MIN_ATTENUATION_PERIOD   = 6.d0
@@ -454,7 +458,7 @@
       R_CENTRAL_CUBE = 990000.d0
 
     ! element width =   7.8125000E-02  degrees =    8.687103      km
-    else if (NEX_MAX*multiplication_factor <= 1152) then
+    else if (max_nex_per_degree*multiplication_factor <= 1152/90.0) then
       DT                       = 0.05d0
 
       MIN_ATTENUATION_PERIOD   = 4.d0
@@ -476,7 +480,7 @@
       R_CENTRAL_CUBE = 985000.d0
 
     ! element width =   7.2115384E-02  degrees =    8.018865      km
-    else if (NEX_MAX*multiplication_factor <= 1248) then
+    else if (max_nex_per_degree*multiplication_factor <= 1248/90.0) then
       DT                       = 0.0462d0
 
       MIN_ATTENUATION_PERIOD   = 4.d0
