@@ -359,7 +359,16 @@
   use shared_parameters, only: &
     R80,R220,R400,R600,R670,R771, &
     RTOPDDOUBLEPRIME,RCMB, &
-    RMOHO_FICTITIOUS_IN_MESHER
+    RMOHO_FICTITIOUS_IN_MESHER, &
+    R80_FICTITIOUS_IN_MESHER !KTAO add
+
+  use constants, only: MAX_NUMBER_OF_MESH_LAYERS
+  use shared_parameters, only: NER => NER_auto_ner
+
+  use constants, only: &
+    EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL, &
+    EARTH_DEPTH_THIRD_DOUBLING_OPTIMAL, &
+    EARTH_DEPTH_FOURTH_DOUBLING_OPTIMAL
 
   implicit none
 
@@ -368,11 +377,12 @@
 
   ! local parameters
   integer,          parameter                :: NUM_REGIONS = 14
-  integer,          dimension(NUM_REGIONS)   :: scaling
+  ! integer,          dimension(NUM_REGIONS)   :: scaling
+  double precision, dimension(NUM_REGIONS)   :: scaling !KTAO modify
   double precision, dimension(NUM_REGIONS)   :: radius
   double precision, dimension(NUM_REGIONS-1) :: ratio_top
   double precision, dimension(NUM_REGIONS-1) :: ratio_bottom
-  integer,          dimension(NUM_REGIONS-1) :: NER
+  !integer,          dimension(NUM_REGIONS-1) :: NER !KTAO commented
   integer :: i
 
 ! uses model specific radii to determine number of elements in radial direction
@@ -381,7 +391,7 @@
   ! radii
   radius(1)  = R_PLANET ! Surface radius
   radius(2)  = RMOHO_FICTITIOUS_IN_MESHER   ! Moho - 1st Mesh Doubling Interface
-  radius(3)  = R80   !!KTAO use R80_FICTITIOUS_IN_MESHER ?
+  radius(3)  = R80_FICTITIOUS_IN_MESHER ! R80   !!KTAO use R80_FICTITIOUS_IN_MESHER
   radius(4)  = R220
   radius(5)  = R400
   radius(6)  = R600
@@ -408,12 +418,18 @@
     !radius(13) = 1371.00d0 !    5000 - 4th Mesh Doubling Interface
     !radius(14) =  982.00d0 ! Top Central Cube
 
-    radius(9)  = 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
+    ! radius(9)  = 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
+    radius(9)  = R_PLANET - EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL ! 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
+
     radius(10) = RTOPDDOUBLEPRIME   !     D_double_prime ~ 3630
     radius(11) = RCMB   !     CMB ~ 3480
 
-    radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
-    radius(13) = 1371000.0d0 !    5000 - 4th Mesh Doubling Interface
+    !radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
+    radius(12) = R_PLANET - EARTH_DEPTH_THIRD_DOUBLING_OPTIMAL   !2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
+
+    ! radius(13) = 1371000.0d0 !    5000 - 4th Mesh Doubling Interface
+    radius(13) = R_PLANET - EARTH_DEPTH_FOURTH_DOUBLING_OPTIMAL   !2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
+
     radius(14) = R_CENTRAL_CUBE ! Top Central Cube
 
   case (IPLANET_MARS)
@@ -468,9 +484,10 @@
   ! Mesh Doubling
   scaling(1)     = 1  ! SURFACE TO MOHO
   scaling(2:8)   = 2  ! MOHO    TO G_double_prime (Geochemical Mantle 1650)
-  scaling(9:11)  = 4  ! G_double_prime    TO MIC (Middle Inner Core)
-  scaling(12)    = 8  ! MIC     TO MIC-II
-  scaling(13:14) = 16 ! MIC-II  TO Central Cube TO Center of the Earth
+  scaling(3) = 1.5 ! KTAO increase NER_220_80
+  scaling(9:11)  = 4  ! G_double_prime    TO MOC (Middle Outter Core)
+  scaling(12)    = 8  ! MOC     TO MOC-II
+  scaling(13:14) = 16 ! MOC-II  TO Central Cube TO Center of the Earth
 
   ! initializes minimum Number of Elements a Region must have
   NER(:)    = 1
@@ -511,11 +528,14 @@
   call auto_optimal_ner(NUM_REGIONS, WIDTH, NEX_MAX, radius, scaling, NER, ratio_top, ratio_bottom)
 
   ! debug
-  !print *,'debug: output NER:',NER(:)
+  print *,'debug: output NER:',NER(:)
 
   ! Set Output arguments
   NER_CRUST                = NER(1)
   NER_80_MOHO              = NER(2)
+  if (NER_80_MOHO < 2) then
+    NER_80_MOHO            = 2
+  endif
   NER_220_80               = NER(3)
   NER_400_220              = NER(4)
   NER_600_400              = NER(5)
@@ -546,7 +566,8 @@
   double precision,intent(in) ::  width   ! Width of the Chunk in Degrees
 
   integer,          dimension(NUM_REGIONS-1),intent(inout) :: NER      ! Elements per Region    - IN-N-OUT - Yummy !
-  integer,          dimension(NUM_REGIONS)  ,intent(in)    :: scaling  ! Element Doubling       - INPUT
+  ! integer,          dimension(NUM_REGIONS)  ,intent(in)    :: scaling  ! Element Doubling       - INPUT
+  double precision, dimension(NUM_REGIONS)  ,intent(in)    :: scaling  ! Element Doubling       - INPUT
   double precision, dimension(NUM_REGIONS)  ,intent(in)    :: r        ! Radius                 - INPUT
   double precision, dimension(NUM_REGIONS-1),intent(out)   :: rt       ! Ratio at Top           - OUTPUT
   double precision, dimension(NUM_REGIONS-1),intent(out)   :: rb       ! Ratio at Bottom        - OUTPUT
@@ -594,8 +615,10 @@
   ! Find optimal elements per region
   do i = 1,NUM_REGIONS-1
     dr = r(i) - r(i+1)              ! Radial Length of Region
-    wt = width * DEGREES_TO_RADIANS * r(i)   / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Top
-    wb = width * DEGREES_TO_RADIANS * r(i+1) / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Bottom
+    ! wt = width * DEGREES_TO_RADIANS * r(i)   / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Top
+    ! wb = width * DEGREES_TO_RADIANS * r(i+1) / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Bottom
+    wt = width * DEGREES_TO_RADIANS * r(i) / NEX * scaling(i) ! Element Width Top
+    wb = width * DEGREES_TO_RADIANS * r(i+1) / NEX * scaling(i) ! Element Width Bottom
     w  = (wt + wb) * 0.5d0          ! Average Width of Region
     ner_test = NER(i)               ! Initial solution
 

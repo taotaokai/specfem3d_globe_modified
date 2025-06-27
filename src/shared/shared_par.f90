@@ -284,6 +284,7 @@
              NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
              NER_TOP_CENTRAL_CUBE_ICB, &
              NEX_XI,NEX_ETA
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: NER_auto_ner !KTAO add
 
   ! attenuation
   ! attenuation period band min/max

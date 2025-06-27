@@ -70,6 +70,8 @@
   use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,REGIONAL_MESH_ADD_2ND_DOUBLING, &
     USE_LOCAL_MESH
 
+  use shared_parameters, only: NER_auto_ner !KTAO add
+
   implicit none
 
   ! layers
@@ -95,7 +97,7 @@
   logical :: ADD_3RD_DOUBLING
 
   ! debugging
-  logical, parameter :: DEBUG = .false.
+  logical, parameter :: DEBUG = .true.
 
   ! initializes
   NUMBER_OF_MESH_LAYERS = 0
@@ -209,6 +211,12 @@
         DEPTH_SECOND_DOUBLING_REAL = R_PLANET - zval
       endif
     enddo
+
+    !KTAO use value determined from auto_ner
+    if (.not. REGIONAL_MESH_CUTOFF) then
+      elem_doubling_mantle = NER_auto_ner(9)
+      DEPTH_SECOND_DOUBLING_REAL = DEPTH_SECOND_DOUBLING_OPTIMAL
+    endif
 
     !debug
     if (DEBUG .and. myrank == 0) &
@@ -1750,8 +1758,9 @@
   if (DEBUG .and. myrank == 0) then
     print *,'debug: define_all_layers:',NUMBER_OF_MESH_LAYERS
     do ielem = 1,NUMBER_OF_MESH_LAYERS
-      print *,'debug:  layer ',ielem,': top/bottom ',sngl(r_top(ielem)),sngl(r_bottom(ielem)), &
-              'rmin/rmax = ',sngl(rmins(ielem)),sngl(rmaxs(ielem)),'ner',ner_mesh_layers(ielem), &
+      print *,'debug:  layer ',ielem,': top/bottom ',sngl(R_PLANET - r_top(ielem)),sngl(R_PLANET - r_bottom(ielem)), &
+              ! 'rmin/rmax = ',sngl(rmins(ielem)),sngl(rmaxs(ielem)), 'ner',ner_mesh_layers(ielem), &
+              'ner',ner_mesh_layers(ielem), &
               'doubling',this_region_has_a_doubling(ielem),ratio_sampling_array(ielem)
     enddo
   endif
