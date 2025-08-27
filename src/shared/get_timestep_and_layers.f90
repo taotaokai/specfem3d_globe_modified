@@ -41,7 +41,7 @@
   double precision :: MIN_GLL_POINT_SPACING,MIN_GLL_POINT_SPACING_NGLL5
   integer :: nex_max_auto_ner_estimate
 
-  double precision :: max_nex_per_degree !KTAO add
+  double precision :: max_nex_per_degree, min_element_width_deg !KTAO add
 
   ! initializes
   DT = 0.d0
@@ -59,6 +59,7 @@
   NEX_MAX = max(NEX_XI,NEX_ETA)
   ! KTAO add
   max_nex_per_degree = max(NEX_XI / ANGULAR_WIDTH_XI_IN_DEGREES, NEX_ETA / ANGULAR_WIDTH_ETA_IN_DEGREES)
+  min_element_width_deg = min(ANGULAR_WIDTH_XI_IN_DEGREES / NEX_XI, ANGULAR_WIDTH_ETA_IN_DEGREES / NEX_ETA)
 
   ! to suppress the crustal layers
   ! (replaced by an extension of the mantle: R_PLANET is not modified, but no more crustal doubling)
@@ -615,7 +616,8 @@
     !         ANGULAR_WIDTH_ETA_IN_DEGREES = 90.0d0 in read_parameter_file.f90
 
     ! gets number of element-layers
-    call auto_ner(min_chunk_width_in_degrees, NEX_MAX)
+    ! call auto_ner(min_chunk_width_in_degrees, NEX_MAX)
+    call auto_ner(min_chunk_width_in_degrees, NEX_MAX, max_nex_per_degree)
 
     ! re-sets attenuation min/max range
     call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
@@ -969,6 +971,8 @@
   double precision :: width,gll_spacing
   double precision :: S_VELOCITY_MIN
 
+  double precision :: min_element_width_deg !KTAO add
+
   ! we often use an estimate based on NGLL == 5, assuming that the number of points per wavelength
   ! coincides with the number of GLL points and thus the element size is the same length a the minimum wavelength:
   !
@@ -1051,6 +1055,8 @@
   ! width of chunk
   width = min(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)
 
+  min_element_width_deg = min(ANGULAR_WIDTH_XI_IN_DEGREES / NEX_XI, ANGULAR_WIDTH_ETA_IN_DEGREES / NEX_ETA)
+
   ! average spacing between GLL points
   gll_spacing = dble(NGLLX - 1)
 
@@ -1073,7 +1079,8 @@
   ! computes Min Period
   !
   ! width of element in km = (Angular width in degrees / NEX_MAX) * degrees to km
-  tmp = width * deg2km / dble(NEX_MAX)
+  ! tmp = width * deg2km / dble(NEX_MAX)
+  tmp = min_element_width_deg * deg2km !KTAO modify
 
   ! average grid node spacing in km = Width of an element in km / spacing for GLL point
   tmp = tmp / gll_spacing

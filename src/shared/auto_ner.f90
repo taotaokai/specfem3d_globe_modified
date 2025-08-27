@@ -484,10 +484,12 @@
   ! Mesh Doubling
   scaling(1)     = 1  ! SURFACE TO MOHO
   scaling(2:8)   = 2  ! MOHO    TO G_double_prime (Geochemical Mantle 1650)
-  scaling(3) = 1.5 ! KTAO increase NER_220_80
   scaling(9:11)  = 4  ! G_double_prime    TO MOC (Middle Outter Core)
   scaling(12)    = 8  ! MOC     TO MOC-II
   scaling(13:14) = 16 ! MOC-II  TO Central Cube TO Center of the Earth
+  ! KTAO add
+  scaling(1) = 0.7 ! KTAO increas NER_CRUST
+  scaling(3) = 1.5 ! KTAO increase NER_220_80
 
   ! initializes minimum Number of Elements a Region must have
   NER(:)    = 1
@@ -504,9 +506,9 @@
 
   ! starts from input arguments of a 90-degree chunk
   ! (where NER values are set empirically for a good mesh design)
-  NER(1) = NER_CRUST
-  NER(2) = NER_80_MOHO
   !> KTAO commented out, so auto_ner can start from 1
+  ! NER(1) = NER_CRUST
+  ! NER(2) = NER_80_MOHO
   ! NER(3) = NER_220_80
   ! NER(4) = NER_400_220
   ! NER(5) = NER_600_400
@@ -561,6 +563,10 @@
   use constants, only: DEGREES_TO_RADIANS
   use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
 
+  use shared_parameters, only: & !KTAO add
+    ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
+    NEX_XI,NEX_ETA
+
   implicit none
 
   integer,intent(in) :: NUM_REGIONS
@@ -579,6 +585,8 @@
   integer :: ner_test
   integer :: i
 
+  double precision :: min_element_width_deg !KTAO add
+
   ! target ratio
   double precision :: aspect_ratio
 
@@ -590,7 +598,7 @@
   double precision,parameter :: ASPECT_RATIO_MARS = 1.5d0
 
   !debug
-  logical, parameter :: DEBUG = .false.
+  logical, parameter :: DEBUG = .true.
 
   ! sets target aspect ratio
   select case(PLANET_TYPE)
@@ -614,13 +622,18 @@
     enddo
   endif
 
+  min_element_width_deg = min(ANGULAR_WIDTH_XI_IN_DEGREES / NEX_XI, &  !KTAO add
+                              ANGULAR_WIDTH_ETA_IN_DEGREES / NEX_ETA)
+
   ! Find optimal elements per region
   do i = 1,NUM_REGIONS-1
     dr = r(i) - r(i+1)              ! Radial Length of Region
     ! wt = width * DEGREES_TO_RADIANS * r(i)   / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Top
     ! wb = width * DEGREES_TO_RADIANS * r(i+1) / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Bottom
-    wt = width * DEGREES_TO_RADIANS * r(i) / NEX * scaling(i) ! Element Width Top
-    wb = width * DEGREES_TO_RADIANS * r(i+1) / NEX * scaling(i) ! Element Width Bottom
+    ! wt = width * DEGREES_TO_RADIANS * r(i) / NEX * scaling(i) ! Element Width Top
+    ! wb = width * DEGREES_TO_RADIANS * r(i+1) / NEX * scaling(i) ! Element Width Bottom
+    wt =  min_element_width_deg * DEGREES_TO_RADIANS * r(i) * scaling(i) ! Element Width Top ! KTAO modify
+    wb =  min_element_width_deg * DEGREES_TO_RADIANS * r(i+1) * scaling(i) ! Element Width Bottom ! KTAO modify
     w  = (wt + wb) * 0.5d0          ! Average Width of Region
     ner_test = NER(i)               ! Initial solution
 
