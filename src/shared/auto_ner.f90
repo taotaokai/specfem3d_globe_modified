@@ -536,10 +536,10 @@
   ! Set Output arguments
   NER_CRUST                = NER(1)
   NER_80_MOHO              = NER(2)
-  ! KTAO add
-  if (NER_80_MOHO < 2) then
-    NER_80_MOHO            = 2
-  endif
+  ! ! KTAO add
+  ! if (NER_80_MOHO < 2) then
+  !   NER_80_MOHO            = 2
+  ! endif
   NER_220_80               = NER(3)
   NER_400_220              = NER(4)
   NER_600_400              = NER(5)
