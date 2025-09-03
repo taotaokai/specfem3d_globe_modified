@@ -468,7 +468,7 @@ end module smooth_etopo5_par
     ! user output
     write(IMAIN,*) '  topography/bathymetry: min/max = ',minval(ibathy_topo),maxval(ibathy_topo)
     write(IMAIN,*)
-    write(IMAIN,*) '  Elapsed time for reading in seconds = ',tCPU
+    write(IMAIN,*) '  Elapsed time for reading in seconds = ',sngl(tCPU)
     write(IMAIN,*)
     call flush_IMAIN()
 

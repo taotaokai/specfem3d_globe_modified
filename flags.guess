@@ -107,6 +107,16 @@ case $my_FC in
         # option "-openmp" is soon deprecated and replaced by "-qopenmp" for versions > 17.x
         OMP_FFLAGS="-qopenmp"
         ;;
+    ifx|*/ifx)
+        #
+        # Intel ifx Fortran for Linux
+        # check: https://www.intel.com/content/www/us/en/developer/articles/guide/porting-guide-for-ifort-to-ifx.html
+        #
+        DEF_FFLAGS="-xHost -fpe0 -ftz -assume buffered_io -assume byterecl -align sequence -std08 -diag-disable 6477 -implicitnone -gen-interfaces -warn all,noexternal"
+        OPT_FFLAGS="-O3 -check nobounds"
+        DEBUG_FFLAGS="-check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv"
+        OMP_FFLAGS="-qopenmp"
+        ;;
     gfortran|*/gfortran|f95|*/f95)
         #
         # GNU gfortran

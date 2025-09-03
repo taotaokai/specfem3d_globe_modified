@@ -242,24 +242,16 @@
 
   close(IIN)
 
-  ! Sets tshift_force to zero to initiate the simulation!
-  if (NSOURCES == 1) then
-    min_tshift_src_original = t_shift(1)
-    tshift_src(1) = 0.d0
-  else
-    min_tshift_src_original = minval(t_shift)
-    tshift_src(1:NSOURCES) = t_shift(1:NSOURCES) - min_tshift_src_original
-  endif
-
+  ! checks half-duration
   do isource = 1,NSOURCES
-    ! checks half-duration
     ! half-duration is the dominant frequency of the source
-    ! point forces use a Ricker source time function
+    ! for point forces using a Ricker source time function
     ! null half-duration indicates a very low-frequency source
-    ! (see constants.h: TINYVAL = 1.d-9 )
     if (hdur(isource) < TINYVAL) hdur(isource) = TINYVAL
+  enddo
 
-    ! check (tilted) force source direction vector
+  ! check (tilted) force source direction vector
+  do isource = 1,NSOURCES
     length = sqrt(sum(comp_dir_vect_source(:,isource)**2)) !!KTAO: modify
     ! length = sqrt( comp_dir_vect_source_E(isource)**2 &
     !              + comp_dir_vect_source_N(isource)**2 &
@@ -270,6 +262,15 @@
       stop 'Error set force point normal length, make sure all forces have a non-zero direction vector'
     endif
   enddo
+
+  ! Sets tshift_force to zero to initiate the simulation!
+  if (NSOURCES == 1) then
+    min_tshift_src_original = t_shift(1)
+    tshift_src(1) = 0.d0
+  else
+    min_tshift_src_original = minval(t_shift)
+    tshift_src(1:NSOURCES) = t_shift(1:NSOURCES) - min_tshift_src_original
+  endif
 
   ! scale and non-dimensionalize the factor_force_source
   ! factor_force_source in FORCESOLUTION file is in Newton

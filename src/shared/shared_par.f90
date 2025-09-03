@@ -108,7 +108,7 @@
   integer :: POISSON_SOLVER = 0   ! 0 == builtin / 1 == PETSc solver
 
   ! regional mesh cut-off
-  logical :: REGIONAL_MESH_CUTOFF
+  logical :: REGIONAL_MESH_CUTOFF = .false.
   ! regional mesh cut-off depth (in km)
   ! possible selections: 24.4d0, 80.d0, 220.d0, 400.d0, 600.d0, 670.d0, 771.d0
   double precision :: REGIONAL_MESH_CUTOFF_DEPTH = 400.d0
@@ -318,8 +318,13 @@
              CRUSTAL,ONE_CRUST
   logical :: MODEL_3D_MANTLE_PERTUBATIONS,HETEROGEN_3D_MANTLE
   logical :: CEM_REQUEST,CEM_ACCEPT
-  logical :: EMC_MODEL
 
+  ! EMC models
+  logical :: EMC_MODEL
+  logical :: EMC_MODEL_TISO        ! using tiso parameterization (vpv,vph,vsv,vsh,eta) from EMC model
+  logical :: EMC_MODEL_QMU         ! using attenuation (Qmu) from EMC model
+
+  ! GLL models
   logical :: MODEL_GLL
   integer :: MODEL_GLL_TYPE
 

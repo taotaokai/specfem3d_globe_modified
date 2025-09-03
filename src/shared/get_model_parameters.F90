@@ -61,7 +61,7 @@
     HONOR_1D_SPHERICAL_MOHO, MODEL_3D_MANTLE_PERTUBATIONS, &
     ONE_CRUST, TRANSVERSE_ISOTROPY, OCEANS,TOPOGRAPHY, &
     CEM_REQUEST,CEM_ACCEPT, &
-    EMC_MODEL
+    EMC_MODEL,EMC_MODEL_TISO,EMC_MODEL_QMU
 
   implicit none
 
@@ -288,6 +288,8 @@
 
   ! no EMC model by default
   EMC_MODEL = .false.
+  EMC_MODEL_TISO = .false.
+  EMC_MODEL_QMU = .false.
 
   ! no 3D model by default
   THREE_D_MODEL = 0
@@ -747,12 +749,20 @@
 #ifdef USE_EMC
   case ('emc_model')
     EMC_MODEL           = .true.
-    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model - for now, tiso models are not supported yet...
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
+  case ('emc_model_qmu')
+    EMC_MODEL           = .true.
+    EMC_MODEL_QMU       = .true.  ! uses Qmu from EMC model
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
   case ('emc_model_tiso')
     EMC_MODEL           = .true.
-    TRANSVERSE_ISOTROPY = .true.
-    ! tiso models are not supported yet...
-    stop 'EMC models with transverse isotropy are not supported yet!'
+    EMC_MODEL_TISO      = .true.  ! uses tiso parameterization from EMC model
+    TRANSVERSE_ISOTROPY = .true.  ! uses tiso
+  case ('emc_model_tiso_qmu')
+    EMC_MODEL           = .true.
+    EMC_MODEL_TISO      = .true.  ! uses tiso parameterization from EMC model
+    EMC_MODEL_QMU       = .true.  ! uses Qmu from EMC model
+    TRANSVERSE_ISOTROPY = .true.  ! uses tiso
 #else
   case ('emc_model')
     print *,'Error model ',trim(MODEL),': package compiled without EMC model support.'

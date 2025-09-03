@@ -82,7 +82,7 @@
 
   ! timing
   double precision, external :: wtime
-  !double precision :: time_start,tCPU
+  double precision :: time_start,tCPU
   integer,dimension(8) :: tval
 
   ! tolerance value to zero layer thickness
@@ -93,7 +93,7 @@
   nspec_tiso = 0
 
   ! get MPI starting time
-  !time_start = wtime()
+  time_start = wtime()
 
   ! counts all the elements in this region of the mesh
   ispec_count = 0
@@ -101,13 +101,23 @@
   ! checks if anything to do
   if (ifirst_region == 0 .and. ilast_region == 0) return
 
+  ! user output
+  if (myrank == 0) then
+    ! outputs current time on system
+    call date_and_time(VALUES=tval)
+    ! current clock time
+    write(IMAIN,'(a,i2.2,a,i2.2,a,i2.2,a)') &
+          "   current clock time is: ",tval(5),"h ",tval(6),"min ",tval(7),"sec"
+    write(IMAIN,*)
+  endif
+
   ! loop on all the layers in this region of the mesh
   do ilayer_loop = ifirst_region,ilast_region
 
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) '  creating layer ',ilayer_loop-ifirst_region+1, &
-                                   'out of ',ilast_region-ifirst_region+1
+                     'out of ',ilast_region-ifirst_region+1
       call flush_IMAIN()
     endif
 
@@ -197,19 +207,33 @@
     ! user output
     if (myrank == 0) then
       ! time estimate
-      !tCPU = wtime() - time_start
+      ! elapsed time since beginning of layer generation
+      tCPU = wtime() - time_start
 
-      ! outputs current time on system
-      call date_and_time(VALUES=tval)
+      ! estimated remaining time:
+      !   time / element = tCPU / ispec_count
+      !   remaining elements = nspec - ispec_count
+      !   -> remaining time = remaining elements * time / element
+      !                     = (nspec - ispec_count) * tCPU / ispec_count
+      !                     = (nspec / ispec_count - 1) * tCPU
+      ! estimated total time:
+      !   time / element = tCPU / ispec_count
+      !   -> total time  = nspec * time / element
+      !                  = nspec * tCPU / ispec_count
 
-      ! debug: outputs remaining time (poor estimation)
+      ! elapsed time
+      write(IMAIN,'(a,f5.1,a,a,f7.1,a,a,f7.1,a)') &
+        "    ",(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0) * 100.0,"%", &
+        "    elapsed time: ",sngl(tCPU)," s", &
+        " - estimated total time: ",sngl(tCPU/ispec_count * nspec)," s"
+
+      !write(IMAIN,'(a,f5.1,a,a,i5.2,a,i2.2,a)') &
+      !  "    ",(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0) * 100.0,"%", &
+      !  "    elapsed time in mm:ss = ",int(tCPU/60),' m ',int(tCPU - int(tCPU/60)*60),' s'
+
+      ! debug: remaining time (poor estimation)
       !tCPU = (1.0-(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0)) &
       !          /(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0)*tCPU*10.0
-
-      ! user output
-      write(IMAIN,'(a,f5.1,a,a,i2.2,a,i2.2,a,i2.2,a)') &
-        "    ",(ilayer_loop-ifirst_region+1.0)/(ilast_region-ifirst_region+1.0) * 100.0,"%", &
-        "    current clock (NOT elapsed) time is: ",tval(5),"h ",tval(6),"min ",tval(7),"sec"
 
       ! flushes I/O buffer
       call flush_IMAIN()

@@ -429,6 +429,23 @@
          (NEX_XI / ratio_divide_central_cube)
   endif
 
+  ! regional mesh cutoff
+  if (REGIONAL_MESH_CUTOFF) then
+    ! double check to have no meshing for outer & inner core
+    ! empty outer core
+    NSPEC_REGIONS(IREGION_OUTER_CORE) = 0
+    NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = 0
+    NSPEC2D_TOP(IREGION_OUTER_CORE) = 0
+    NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE) = 0
+    NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE) = 0
+    ! empty inner core
+    NSPEC_REGIONS(IREGION_INNER_CORE) = 0
+    NSPEC2D_BOTTOM(IREGION_INNER_CORE) = 0
+    NSPEC2D_TOP(IREGION_INNER_CORE) = 0
+    NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE) = 0
+    NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE) = 0
+  endif
+
   ! check
   if (minval(NSPEC_REGIONS(:)) < 0) then
     print *,'Invalid NSPEC_REGIONS: ',NSPEC_REGIONS(:)

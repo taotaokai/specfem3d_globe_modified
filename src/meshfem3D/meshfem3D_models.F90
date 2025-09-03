@@ -1776,6 +1776,17 @@
 
   endif
 
+#ifdef USE_EMC
+  ! IRIS EMC model
+  ! over-imposes Qmu values
+  if (EMC_MODEL_QMU) then
+    ! EMC model w/ 3D Qmu parameterization
+    r_used = r_prem  ! takes actual position (between CMB and surface)
+    call model_EMC_attenuation(r_used,theta,phi,Qmu)
+  endif
+#endif
+
+
   ! sponge layer
   if (ABSORB_USING_GLOBAL_SPONGE) then
     ! get distance to chunk center

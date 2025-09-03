@@ -562,7 +562,7 @@
     write(IMAIN,*) '  maximum neighbors found per element = ',num_neighbors_max,'(should be 37 for globe meshes)'
     write(IMAIN,*) '  total number of neighbors           = ',num_neighbors_all
     write(IMAIN,*)
-    write(IMAIN,*) '  Elapsed time for detection of neighbors in seconds = ',tCPU
+    write(IMAIN,*) '  Elapsed time for detection of neighbors in seconds = ',sngl(tCPU)
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -685,7 +685,7 @@
   nsources_local = 0
   !!KTAO modified 
   !!KTAO SIMULATION_TYPE == 2: nsources_local is needed otherwise error in prepare_gpu:748
-  !!KTAO TODO: futher check needed
+  !!KTAO TODO: further check needed
   ! if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
   do isource = 1,NSOURCES
     if (myrank == islice_selected_source(isource)) nsources_local = nsources_local + 1

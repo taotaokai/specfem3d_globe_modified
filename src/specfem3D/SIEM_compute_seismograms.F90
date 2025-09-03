@@ -260,7 +260,6 @@
       enddo
     endif
 
-
     ! store North, East and Vertical components
 
     ! distinguish between single and double precision for reals
