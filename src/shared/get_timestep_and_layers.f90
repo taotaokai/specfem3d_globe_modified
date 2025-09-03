@@ -616,8 +616,7 @@
     !         ANGULAR_WIDTH_ETA_IN_DEGREES = 90.0d0 in read_parameter_file.f90
 
     ! gets number of element-layers
-    ! call auto_ner(min_chunk_width_in_degrees, NEX_MAX)
-    call auto_ner(min_chunk_width_in_degrees, NEX_MAX, max_nex_per_degree)
+    call auto_ner(min_chunk_width_in_degrees, NEX_MAX)
 
     ! re-sets attenuation min/max range
     call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
