@@ -83,6 +83,11 @@ POISSON_SOLVER                  = 0
 # record length in minutes
 RECORD_LENGTH_IN_MINUTES        = 2.5d0
 
+# (optional) User defined DT, NSTEP, T0
+# DT = 0.1
+# NSTEP = 500
+# T0 = 10.0
+
 #-----------------------------------------------------------
 #
 # Mesh
@@ -102,6 +107,32 @@ REGIONAL_MESH_CUTOFF_DEPTH      = 400.d0
 # (by default, a first doubling layer will be added below the Moho, and a second one below the 771km-depth layer.
 #  Setting this flag to .true., will move the second one below the 220km-depth layer for regional mesh cut-offs only.)
 REGIONAL_MESH_ADD_2ND_DOUBLING  = .false.
+
+# # (optional) LOCAL MESH (only used when REGIONAL_MESH_CUTOFF = .true.)
+USE_LOCAL_MESH = .false.
+# total number of mesh layers for local mesh
+# (moho used will be the fictitious moho depth, i.e., at 40 or 35 km depth depending on EARTH_RMOHO_STRETCH_ADJUSTMENT)
+NUMBER_OF_LAYERS_CRUST = 4
+NUMBER_OF_LAYERS_MANTLE = 36
+# number of doubling layers
+NDOUBLINGS = 1
+# position of doubling layer (counted from top down)
+NZ_DOUBLING_1 = 5
+# NZ_DOUBLING_2 = 36
+# NZ_DOUBLING_3 = 30
+# NZ_DOUBLING_4 = 30
+# NZ_DOUBLING_5 = 30
+
+#-----------------------------------------------------------
+#
+# Optional: scattering perturbations
+#
+#-----------------------------------------------------------
+# SCATTERING_PERTURBATIONS = .false.
+# # perturbation strength (e.g., 0.1 for 10% perturbations)
+# SCATTERING_STRENGTH = 0.1   
+# # correlation factor (e.g., 1.0 for k * a ~ 1.0)
+# SCATTERING_CORRELATION = 1.0  
 
 #-----------------------------------------------------------
 #
@@ -269,6 +300,49 @@ USE_MONOCHROMATIC_CMT_SOURCE    = .false.
 # print source time function
 PRINT_SOURCE_TIME_FUNCTION      = .false.
 
+# (optional) 
+#KTAO: (optional) flag if using geocentric source location, default to false if not set
+#
+# CMTSOLUTION or FORCESOLUTION uses ECEF coordinate instead of geodetic coordinate
+#
+# example of CMTSOLUTION in ECEF       |   Geodetic coord.
+#|------------------------------
+#|PDEW 2014 5 30 1 20 17.5 25.00 97.85 10.0 0.0 5.9 MYANMAR-CHINA BORDER REG
+#|event_name:        C201405300120A    
+#|time_shift(s):     0.0
+#|hdur_Gaussian(s):  +1.35135135E+00   |   hdur_triangle(s):    2.2000
+#|x(m):              -7.93833843E+05   |   latitude(deg):       24.9300
+#|y(m):              +5.72085220E+06   |   longitude(deg):      97.9000
+#|z(m):              +2.66664346E+06   |   depth(km):           14.7000
+#|Mxx(N*m):          +4.24454944E+17   |   Mrr(dyn*cm):         -0.7270e+24
+#|Myy(N*m):          -1.76285423E+17   |   Mtt(dyn*cm):         -2.1300e+24
+#|Mzz(N*m):          -2.47869521E+17   |   Mpp(dyn*cm):         +2.8600e+24
+#|Mxy(N*m):          -4.66821803E+17   |   Mrt(dyn*cm):         +0.7820e+24
+#|Mxz(N*m):          +6.73237363E+17   |   Mrp(dyn*cm):         +1.9700e+24
+#|Myz(N*m):          +9.61213698E+16   |   Mtp(dyn*cm):         +8.4000e+24
+#|------------------------------
+# source time function(time integral of moment rate function): stf(t;t0,tau) = erf((t-t0)/tau), 
+# tau (i.e. hdur_Gaussian) = hdur_triangle/SOURCE_DECAY_MIMIC_TRIANGLE
+# SOURCE_DECAY_MIMIC_TRIANGLE = 1.628d0 as defined in setup/constants.h.in
+#
+# example of FORCESOLUTION in ECEF     | Geodetic coord.
+#|--------------------------------     |
+#|CQ.WAS..LHZ  2000 1 1 0 0 0.0                                        ! ignored by the code but should be useful to set origin time
+#|time_shift(s):               0.0     
+#|hdur_or_f0:                  0.5                                     ! half duration(s) for STEP or dominant frequency (Hz) for Ricker
+#|x(m):                        xxx     | latitude(deg):           28.8
+#|y(m):                        xxx     | longitude(deg):          106.
+#|z(m):                        xxx     | depth(km):               0.0
+#|source_time_function:        0                                       ! 0=STEP,1=Ricker
+#|force_magnitude(Newton):     1.d15                                  
+#|fx:                          xxx     | force_vector_E:          0.0  ! x/y/z or e/n/z_up component (magnitude is normalized automatically in code)
+#|fy:                          xxx     | force_vector_N:          0.0
+#|fz:                          xxx     | force_vector_Z_UP:       1.0
+#|--------------------------------
+# NOTE: only the value can appear after colon :, i.e. key: value 
+
+USE_ECEF_COORDINATE             = .true.
+
 #-----------------------------------------------------------
 #
 # Seismograms
@@ -434,4 +508,6 @@ ADIOS_FOR_UNDO_ATTENUATION      = .true.
 # HDF5 Database I/O
 # (note the flags for HDF5 and ADIOS are mutually exclusive, only one can be used)
 HDF5_ENABLED                    = .false.
+# (optional) number of io dedicated nodes
+# HDF5_IO_NODES = 2  
 
