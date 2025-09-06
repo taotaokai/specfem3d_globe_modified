@@ -40,7 +40,6 @@
                                      Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
 
   use constants, only: myrank
-  use shared_input_parameters, only: USE_ECEF_COORDINATE !KTAO add
 
   implicit none
 
@@ -135,6 +134,7 @@
 
   use constants
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,USE_FORCE_POINT_SOURCE
+  use shared_input_parameters, only: USE_ECEF_COORDINATE !KTAO add
 
   implicit none
 
