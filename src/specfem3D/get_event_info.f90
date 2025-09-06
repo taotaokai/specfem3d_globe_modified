@@ -403,6 +403,10 @@
       else
         read(string(15:len_trim(string)),*) hdur(isource)
       endif
+      if (USE_ECEF_COORDINATE) then
+        !KTAO in CMTSOLUTION.ECEF, hdur is actually hdur_Gaussian, so convert it back
+        hdur(isource) = hdur(isource) * SOURCE_DECAY_MIMIC_TRIANGLE
+      endif
 
       ! read latitude
       read(IIN,"(a)") string

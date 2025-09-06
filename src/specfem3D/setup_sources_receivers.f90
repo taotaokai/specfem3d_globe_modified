@@ -764,12 +764,8 @@
     endif
   endif
 
-  if (USE_ECEF_COORDINATE) then
-    hdur_Gaussian(:) = hdur(:) !! KTAO: CMTSOLUTION_ECEF uses hdur_Gaussian directly
-  else
-    ! convert the half duration for triangle STF to the one for Gaussian STF
-    hdur_Gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
-  endif
+  ! convert the half duration for triangle STF to the one for Gaussian STF
+  hdur_Gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
 
   ! define t0 as the earliest start time
   if (USE_FORCE_POINT_SOURCE) then
