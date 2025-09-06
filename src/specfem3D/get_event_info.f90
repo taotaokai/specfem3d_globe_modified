@@ -40,6 +40,7 @@
                                      Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
 
   use constants, only: myrank
+  use shared_input_parameters, only: USE_ECEF_COORDINATE !KTAO add
 
   implicit none
 
