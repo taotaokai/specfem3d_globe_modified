@@ -50,6 +50,10 @@
   ! timing
   double precision, external :: wtime
 
+  CHARACTER(LEN=8) :: current_date
+  CHARACTER(LEN=10) :: current_time
+
+
   ! number of buffered snapshot
   ntstep_kl = max(1, NTSTEP_BETWEEN_COMPUTE_KERNELS)
   buffer_size = ceiling(dble(NT_DUMP_ATTENUATION) / ntstep_kl)
@@ -319,7 +323,19 @@
 
     else if (SIMULATION_TYPE == 3) then
       ! reads in last stored forward wavefield
+      call synchronize_all()
+      if (myrank == 0) then
+        call date_and_time(DATE=current_date, TIME=current_time)
+        print *, "time before read_forward_arrays_undoatt: ", myrank, current_date, current_time
+      endif
+
       call read_forward_arrays_undoatt()
+
+      call synchronize_all()
+      if (myrank == 0) then
+        call date_and_time(DATE=current_date, TIME=current_time)
+        print *, "time after read_forward_arrays_undoatt: ", myrank, current_date, current_time
+      endif
 
       ! note: after reading the restart files of displacement back from disk, recompute the strain from displacement;
       !       this is better than storing the strain to disk as well, which would drastically increase I/O volume
@@ -437,6 +453,10 @@
         ! simulation status output and stability check
         if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
           call check_stability_backward()
+          if (myrank == 0) then
+            call date_and_time(DATE=current_date, TIME=current_time)
+            print *, "time after check_stability_backward: ", myrank, current_date, current_time
+          endif
         endif
 
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
