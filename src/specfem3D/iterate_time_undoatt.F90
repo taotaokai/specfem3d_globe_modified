@@ -326,7 +326,7 @@
       call synchronize_all()
       if (myrank == 0) then
         call date_and_time(DATE=current_date, TIME=current_time)
-        print *, "time before read_forward_arrays_undoatt: ", myrank, current_date, current_time
+        write(IMAIN, *)"time before read_forward_arrays_undoatt: ", iteration_on_subset, current_date, current_time
       endif
 
       call read_forward_arrays_undoatt()
@@ -334,7 +334,7 @@
       call synchronize_all()
       if (myrank == 0) then
         call date_and_time(DATE=current_date, TIME=current_time)
-        print *, "time after read_forward_arrays_undoatt: ", myrank, current_date, current_time
+        write(IMAIN, *) "time after read_forward_arrays_undoatt: ", iteration_on_subset, current_date, current_time
       endif
 
       ! note: after reading the restart files of displacement back from disk, recompute the strain from displacement;
@@ -455,7 +455,7 @@
           call check_stability_backward()
           if (myrank == 0) then
             call date_and_time(DATE=current_date, TIME=current_time)
-            print *, "time after check_stability_backward: ", myrank, current_date, current_time
+            write(IMAIN,*) "time after check_stability_backward: ", myrank, it, current_date, current_time
           endif
         endif
 
@@ -573,6 +573,10 @@
         ! simulation status output and stability check
         if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
           call check_stability()
+          if (myrank == 0) then
+            call date_and_time(DATE=current_date, TIME=current_time)
+            write(IMAIN,*) "time after check_stability: ", myrank, it, current_date, current_time
+          endif
           if (I_am_running_on_a_slow_node) goto 100
         endif
 
