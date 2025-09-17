@@ -749,3 +749,22 @@
 
   end subroutine calndr
 
+  function iso8601() result(timestamp_str)
+    ! Returns current date and time in ISO 8601 format (e.g., 2025-09-17T10:04:00.000+00:00).
+    character(len=29) :: timestamp_str
+    character(len=5)  :: zone
+    integer           :: dt(8)
+
+    ! Define the ISO 8601 format string
+    character(len=*), parameter :: ISO_FMT = &
+      '(i4, 2("-", i2.2), "T", 2(i0.2, ":"), i0.2, ".", i0.3, a, ":", a)'
+
+    ! Get date and time components and time zone information
+    call date_and_time(values=dt, zone=zone)
+
+    ! Format the components into an ISO 8601 string
+    write (timestamp_str, ISO_FMT) dt(1), dt(2), dt(3), &  ! Year, Month, Day
+                                  dt(5), dt(6), dt(7),  &  ! Hour, Minute, Second
+                                  dt(8),                &  ! Milliseconds
+                                  zone(1:3), zone(4:5)     ! Time zone offset
+  end function iso8601

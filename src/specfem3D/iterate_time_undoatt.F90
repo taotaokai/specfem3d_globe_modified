@@ -323,19 +323,7 @@
 
     else if (SIMULATION_TYPE == 3) then
       ! reads in last stored forward wavefield
-      call synchronize_all()
-      if (myrank == 0) then
-        call date_and_time(DATE=current_date, TIME=current_time)
-        write(IMAIN, *)"time before read_forward_arrays_undoatt: ", iteration_on_subset, current_date, current_time
-      endif
-
       call read_forward_arrays_undoatt()
-
-      call synchronize_all()
-      if (myrank == 0) then
-        call date_and_time(DATE=current_date, TIME=current_time)
-        write(IMAIN, *) "time after read_forward_arrays_undoatt: ", iteration_on_subset, current_date, current_time
-      endif
 
       ! note: after reading the restart files of displacement back from disk, recompute the strain from displacement;
       !       this is better than storing the strain to disk as well, which would drastically increase I/O volume

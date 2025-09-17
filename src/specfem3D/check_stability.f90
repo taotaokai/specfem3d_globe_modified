@@ -495,8 +495,8 @@
   real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
   real(kind=CUSTOM_REAL) :: norm_cm,norm_ic
   ! timer MPI
-  !double precision :: tCPU
-  !double precision, external :: wtime
+  double precision :: tCPU
+  double precision, external :: wtime
   !double precision :: timeval
   !integer :: ihours,iminutes,iseconds,int_tCPU
 
@@ -554,7 +554,7 @@
 
     ! no further time estimation since only partially computed solution yet...
     ! elapsed time since beginning of the simulation
-    !tCPU = wtime() - time_start
+    tCPU = wtime() - time_start
     !int_tCPU = int(tCPU)
     !ihours = int_tCPU / 3600
     !iminutes = (int_tCPU - 3600*ihours) / 60
@@ -574,7 +574,7 @@
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
 
     ! no timing info, things get confusing with forward check timing
-    !write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
+    write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
     !write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     !write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
