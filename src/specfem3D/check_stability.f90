@@ -480,7 +480,8 @@
     GPU_MODE,Mesh_pointer, &
     SIMULATION_TYPE,scale_displ, &
     NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
-    myrank
+    myrank, &
+    time_start !KTAO add
 
   !use specfem_par, only: time_start,DT,t0
 
