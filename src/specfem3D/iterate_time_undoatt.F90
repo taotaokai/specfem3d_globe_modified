@@ -50,10 +50,6 @@
   ! timing
   double precision, external :: wtime
 
-  CHARACTER(LEN=8) :: current_date
-  CHARACTER(LEN=10) :: current_time
-
-
   ! number of buffered snapshot
   ntstep_kl = max(1, NTSTEP_BETWEEN_COMPUTE_KERNELS)
   buffer_size = ceiling(dble(NT_DUMP_ATTENUATION) / ntstep_kl)
@@ -441,10 +437,6 @@
         ! simulation status output and stability check
         if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
           call check_stability_backward()
-          if (myrank == 0) then
-            call date_and_time(DATE=current_date, TIME=current_time)
-            write(IMAIN,*) "time after check_stability_backward: ", myrank, it, current_date, current_time
-          endif
         endif
 
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
@@ -561,10 +553,6 @@
         ! simulation status output and stability check
         if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
           call check_stability()
-          if (myrank == 0) then
-            call date_and_time(DATE=current_date, TIME=current_time)
-            write(IMAIN,*) "time after check_stability: ", myrank, it, current_date, current_time
-          endif
           if (I_am_running_on_a_slow_node) goto 100
         endif
 
