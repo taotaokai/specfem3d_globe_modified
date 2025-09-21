@@ -195,7 +195,13 @@ PERCENT_OF_MEM_TO_USE_PER_CORE  = 85.d0
 # (optional) number of timesteps between calling compute_kernels() in adjoint simulation with undo_attenuation
 # note: this flag is tested for stationary kernels only (STEADY_STATE_KERNEL = .true.)
 # be careful when changing this flag when computing classical kernel
-NTSTEP_BETWEEN_COMPUTE_KERNELS = 1  # if unset, defaults to 1
+# temporal decimation when computing correlation between forward and adjoint wavefields
+# sum(u_forward(it, xyz) * u_adjoint(it, xyz), it=0, nt, 2*nt, 3*nt,...)
+NTSTEP_BETWEEN_COMPUTE_KERNELS = 10  # if unset, defaults to 1
+
+# (optional) number of time steps between forward wavefiled snapshots,
+# NT_DUMP_ATTENUATION / NTSTEP_BETWEEN_COMPUTE_KERNELS is the maximum number of forward field snapshots resides in the memory
+NT_DUMP_ATTENUATION = 5000 # if unset, use automatically determined value
 
 ## exact mass matrices for rotation
 # three mass matrices instead of one are needed to handle rotation very accurately;

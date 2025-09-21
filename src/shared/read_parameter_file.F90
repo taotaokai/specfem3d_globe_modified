@@ -347,6 +347,10 @@
   !!KTAO (optional) number of timesteps between calling compute_kernels() in adjoint simulation with undo_attenuation
   call read_value_integer(NTSTEP_BETWEEN_COMPUTE_KERNELS, 'NTSTEP_BETWEEN_COMPUTE_KERNELS', ier); ier = 0  !KTAO default 1
 
+  ! KTAO (optional) number of time steps between forward wavefiled snapshots,
+  ! NT_DUMP_ATTENUATION / NTSTEP_BETWEEN_COMPUTE_KERNELS is the maximum number of forward field snapshots resides in the memory
+  call read_value_integer(USER_NT_DUMP_ATTENUATION, 'NT_DUMP_ATTENUATION', ier); ier = 0  !KTAO default -1
+
   call read_value_logical(USE_ECEF_COORDINATE, 'USE_ECEF_COORDINATE', ier); ier = 0  !! KTAO: default to .false. in shared_par.f90
 
   ! (optional) regional local mesh parameters

@@ -234,7 +234,8 @@
   !!KTAO (optional) 
   call bcast_all_singlel(USE_ECEF_COORDINATE)
   call bcast_all_singledp(USER_T0)
-  call bcast_all_singledp(NTSTEP_BETWEEN_COMPUTE_KERNELS)
+  call bcast_all_singlei(NTSTEP_BETWEEN_COMPUTE_KERNELS)
+  call bcast_all_singlei(USER_NT_DUMP_ATTENUATION)
 
   ! non-main processes set their parameters
   if (myrank /= 0) then

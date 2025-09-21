@@ -1005,7 +1005,11 @@
   endif
 
   ! buffering with undo_attenuation
-  NT_DUMP_ATTENUATION = NT_DUMP_ATTENUATION_VAL
+  NT_DUMP_ATTENUATION = NT_DUMP_ATTENUATION_VAL  !!KTAO maximum number allowed  
+  !!KTAO user user defined NT_DUMP_ATTENUATION
+  if (USER_NT_DUMP_ATTENUATION > 0 .and. USER_NT_DUMP_ATTENUATION < NT_DUMP_ATTENUATION_VAL) then 
+    NT_DUMP_ATTENUATION = USER_NT_DUMP_ATTENUATION 
+  endif
   if (UNDO_ATTENUATION) then
     ! makes sure buffer size is not too big for total time length
     !

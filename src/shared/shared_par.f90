@@ -183,6 +183,11 @@
   ! be careful when changing this flag when computing classical kernel
   integer :: NTSTEP_BETWEEN_COMPUTE_KERNELS = 1 !!KTAO moved from constants.h
 
+  ! (optional) number of time steps between forward wavefiled snapshots,
+  ! NT_DUMP_ATTENUATION / NTSTEP_BETWEEN_COMPUTE_KERNELS is the maximum number of forward field snapshots 
+  ! resides in the memory at once. Default is -1, which let the code choose the number of snapshots
+  integer :: USER_NT_DUMP_ATTENUATION = -1 !!KTAO add
+
   ! (optional) local mesh parameters
   ! for regional cutoff meshes (REGIONAL_MESH_CUTOFF must be .true. in Par_file)
   ! this will create a local mesh, i.e., doesn't honor Moho/R80/R220, but creates a crust & mantle mesh
