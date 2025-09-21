@@ -75,6 +75,8 @@
   use specfem_par, only: deltat,GPU_MODE,Mesh_pointer,ANISOTROPIC_KL,UNDO_ATTENUATION, &
     hprime_xx,hprime_xxT,hprime_yy,hprime_zz
 
+  use specfem_par, only: NTSTEP_BETWEEN_COMPUTE_KERNELS !KTAO add
+
   use specfem_par_crustmantle
 
   ! element compute routines
@@ -322,6 +324,8 @@
   use constants_solver
   use specfem_par, only: deltat,hprime_xx,hprime_yy,hprime_zz
   use specfem_par, only: GPU_MODE,Mesh_pointer,UNDO_ATTENUATION
+
+  use specfem_par, only: NTSTEP_BETWEEN_COMPUTE_KERNELS !KTAO add
 
   use specfem_par_outercore
 
@@ -706,6 +710,8 @@
   use specfem_par, only: deltat,GPU_MODE,Mesh_pointer,UNDO_ATTENUATION, &
     hprime_xx,hprime_xxT,hprime_yy,hprime_zz
 
+  use specfem_par, only: NTSTEP_BETWEEN_COMPUTE_KERNELS !KTAO add
+
   use specfem_par_innercore
 
   ! element compute routines
@@ -913,6 +919,8 @@
   use specfem_par, only: deltat
   use specfem_par, only: GPU_MODE,Mesh_pointer,UNDO_ATTENUATION
   use specfem_par_crustmantle
+
+  use specfem_par, only: NTSTEP_BETWEEN_COMPUTE_KERNELS !KTAO add
 
   implicit none
 

@@ -344,6 +344,9 @@
   !!KTAO T0 specified to override automatic t0
   call read_value_double_precision(USER_T0, 'T0', ier); ier = 0  !!KTAO: default to 0
 
+  !!KTAO (optional) number of timesteps between calling compute_kernels() in adjoint simulation with undo_attenuation
+  call read_value_integer(NTSTEP_BETWEEN_COMPUTE_KERNELS, 'NTSTEP_BETWEEN_COMPUTE_KERNELS', ier); ier = 0  !KTAO default 1
+
   call read_value_logical(USE_ECEF_COORDINATE, 'USE_ECEF_COORDINATE', ier); ier = 0  !! KTAO: default to .false. in shared_par.f90
 
   ! (optional) regional local mesh parameters

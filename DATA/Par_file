@@ -192,6 +192,11 @@ MEMORY_INSTALLED_PER_CORE_IN_GB = 4.d0
 #  a higher value and if the adjoint crashes then try again with a lower value)
 PERCENT_OF_MEM_TO_USE_PER_CORE  = 85.d0
 
+# (optional) number of timesteps between calling compute_kernels() in adjoint simulation with undo_attenuation
+# note: this flag is tested for stationary kernels only (STEADY_STATE_KERNEL = .true.)
+# be careful when changing this flag when computing classical kernel
+NTSTEP_BETWEEN_COMPUTE_KERNELS = 1  # if unset, defaults to 1
+
 ## exact mass matrices for rotation
 # three mass matrices instead of one are needed to handle rotation very accurately;
 # otherwise rotation is handled slightly less accurately (but still reasonably well);

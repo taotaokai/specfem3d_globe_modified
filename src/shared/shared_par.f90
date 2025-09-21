@@ -178,6 +178,11 @@
   integer :: USER_NSTEP = -1          ! negative to ignore by default
   double precision :: USER_T0 = 0.0   !!KTAO  negative to ignore by default
 
+  ! (optional) number of timesteps between calling compute_kernels() in adjoint simulation with undo_attenuation
+  ! note: this flag is tested for stationary kernels only (STEADY_STATE_KERNEL = .true.)
+  ! be careful when changing this flag when computing classical kernel
+  integer :: NTSTEP_BETWEEN_COMPUTE_KERNELS = 1 !!KTAO moved from constants.h
+
   ! (optional) local mesh parameters
   ! for regional cutoff meshes (REGIONAL_MESH_CUTOFF must be .true. in Par_file)
   ! this will create a local mesh, i.e., doesn't honor Moho/R80/R220, but creates a crust & mantle mesh
