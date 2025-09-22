@@ -268,40 +268,42 @@
   ! user output
   if (UNDO_ATTENUATION) then
     if (PRINT_INFO_TO_SCREEN) then
-      print *,'*******************************************************************************'
-      print *,'Estimating optimal disk dumping interval for UNDO_ATTENUATION:'
-      print *,'*******************************************************************************'
-      print *
-      print *,'without undoing of attenuation you are using ',static_memory_size_GB,' GB per core'
-      print *,'  i.e. ',sngl(100.d0 * static_memory_size_GB / MEMORY_INSTALLED_PER_CORE_IN_GB),'% of the installed memory'
+      write(IMAIN,*) '*******************************************************************************'
+      write(IMAIN,*) 'Estimating optimal disk dumping interval for UNDO_ATTENUATION:'
+      write(IMAIN,*) '*******************************************************************************'
+      write(IMAIN,*)
+      write(IMAIN,*) 'without undoing of attenuation you are using ',static_memory_size_GB,' GB per core'
+      write(IMAIN,*) '  i.e. ',sngl(100.d0 * static_memory_size_GB / MEMORY_INSTALLED_PER_CORE_IN_GB),'% of the installed memory'
 
-      print *
-      print *,'each time step to store in memory to undo attenuation will require storing ', &
-                    size_to_store_at_each_time_step,' GB per core'
-      print *
-      print *,'*******************************************************************************'
-      print *,'the optimal value is thus NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
-      print *,'*******************************************************************************'
+      write(IMAIN,*)
+      write(IMAIN,*) 'each time step to store in memory to undo attenuation will require storing ', & 
+                      size_to_store_at_each_time_step,' GB per core'
+      write(IMAIN,*)
+      write(IMAIN,*) '*******************************************************************************'
+      write(IMAIN,*) 'the optimal value is thus NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
+      write(IMAIN,*) '*******************************************************************************'
 
-      print *
-      print *,'we will need to save a total of ',number_of_dumpings_to_do,' dumpings (restart files) to disk'
+      write(IMAIN,*)
+      write(IMAIN,*) 'we will need to save a total of ',number_of_dumpings_to_do,' dumpings (restart files) to disk'
 
-      print *
-      print *,'each dumping on the disk to undo attenuation will require storing ',disk_size_of_each_dumping,' GB per core'
+      write(IMAIN,*)
+      write(IMAIN,*) 'each dumping on the disk to undo attenuation will require storing ',disk_size_of_each_dumping,' GB per core'
 
-      print *
-      print *,'each dumping on the disk will require storing ',disk_size_of_each_dumping*NPROCTOT,' GB for all cores'
+      write(IMAIN,*)
+      write(IMAIN,*) 'each dumping on the disk will require storing ',disk_size_of_each_dumping*NPROCTOT,' GB for all cores'
 
-      print *
-      print *,'ALL dumpings on the disk will require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
+      write(IMAIN,*)
+      write(IMAIN,*) 'ALL dumpings on the disk will require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
 
-      print *
-      print *,'*******************************************************************************'
-      print *,'ALL dumpings on the disk will require storing ', &
-                     disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
-      print *,'  i.e. ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT/1000.d0,' TB'
-      print *,'*******************************************************************************'
-      print *
+      write(IMAIN,*)
+      write(IMAIN,*) '*******************************************************************************'
+      write(IMAIN,*) 'ALL dumpings on the disk will require storing ', &
+                            disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
+      write(IMAIN,*) '  i.e. ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT/1000.d0,' TB'
+      write(IMAIN,*) '*******************************************************************************'
+      write(IMAIN,*)
+
+      call flush_IMAIN()
 
     endif
   endif

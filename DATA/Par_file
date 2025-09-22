@@ -197,11 +197,11 @@ PERCENT_OF_MEM_TO_USE_PER_CORE  = 85.d0
 # be careful when changing this flag when computing classical kernel
 # temporal decimation when computing correlation between forward and adjoint wavefields
 # sum(u_forward(it, xyz) * u_adjoint(it, xyz), it=0, nt, 2*nt, 3*nt,...)
-NTSTEP_BETWEEN_COMPUTE_KERNELS = 10  # if unset, defaults to 1
+NTSTEP_BETWEEN_COMPUTE_KERNELS = 10  # if not set, defaults to 1
 
 # (optional) number of time steps between forward wavefiled snapshots,
 # NT_DUMP_ATTENUATION / NTSTEP_BETWEEN_COMPUTE_KERNELS is the maximum number of forward field snapshots resides in the memory
-NT_DUMP_ATTENUATION = 5000 # if unset, use automatically determined value
+NT_DUMP_ATTENUATION = 5000 # if not set, use automatically determined maximum allowed value
 
 ## exact mass matrices for rotation
 # three mass matrices instead of one are needed to handle rotation very accurately;
