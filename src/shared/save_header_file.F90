@@ -273,9 +273,14 @@
     write(IMAIN,*) 'Estimating optimal disk dumping interval for UNDO_ATTENUATION:'
     write(IMAIN,*) '*******************************************************************************'
     write(IMAIN,*)
-    write(IMAIN,*) 'without undoing of attenuation you are using ',static_memory_size_GB,' GB per core'
-    write(IMAIN,*) '  i.e. ',sngl(100.d0 * static_memory_size_GB / MEMORY_INSTALLED_PER_CORE_IN_GB),'% of the installed memory'
+    write(IMAIN,*) 'installed memory is ', MEMORY_INSTALLED_PER_CORE_IN_GB, 'GB per core'
+    write(IMAIN,*) 'and the percentage of memory to use is ', PERCENT_OF_MEM_TO_USE_PER_CORE, '%'
+    write(IMAIN,*) 'so the memory to use is ', &
+      MEMORY_INSTALLED_PER_CORE_IN_GB*PERCENT_OF_MEM_TO_USE_PER_CORE/100.d0, 'GB per core'
 
+    write(IMAIN,*)
+    write(IMAIN,*) 'without undoing of attenuation you are using ',static_memory_size_GB,' GB per core'
+    ! write(IMAIN,*) '  i.e. ',sngl(100.d0 * static_memory_size_GB / MEMORY_INSTALLED_PER_CORE_IN_GB),'% of the installed memory'
     write(IMAIN,*)
     write(IMAIN,*) 'each time step to store in memory to undo attenuation will require storing ', & 
                     size_to_store_at_each_time_step,' GB per core'
