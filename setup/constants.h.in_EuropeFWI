@@ -621,7 +621,7 @@
 ! number of timesteps between calling compute_kernels() in adjoint simulation with undo_attenuation
 ! note: this flag is tested for stationary kernels only (STEADY_STATE_KERNEL = .true.)
 ! be careful when changing this flag when computing classical kernel
-  integer, parameter :: NTSTEP_BETWEEN_COMPUTE_KERNELS = 1
+!  integer, parameter :: NTSTEP_BETWEEN_COMPUTE_KERNELS = 1  !!KTAO moved to Par_file as optional parameter (default = 1)
 
 
 !!-----------------------------------------------------------
