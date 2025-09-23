@@ -46,6 +46,8 @@
   use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON,R_PLANET, &
     TOPOGRAPHY
 
+  use shared_parameters, only: USE_LOCAL_MESH !KTAO add
+
   use meshfem_par, only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST,REFERENCE_CRUSTAL_MODEL
 
@@ -203,6 +205,11 @@
         do_mesh_stretching = .true.
     endif
 
+    !KTAO no moho stretching for USE_LOCAL_MESH
+    if (USE_LOCAL_MESH) then
+      do_mesh_stretching = .false.
+    endif
+
     if (do_mesh_stretching) then
       ! globe surface must honor topography for elements to be stretched for moho
       !
@@ -264,10 +271,12 @@
       endif
     endif   ! do_mesh_stretching
 
+    if (do_mesh_stretching) then !KTAO only check when do_mesh_stretching is true 
     ! small stretch check: stretching should affect only points above R220
-    if (R220 - r * R_PLANET > TOL) then
-      print *,'Error moho stretching: ',r*R_PLANET,R220,moho_radius*R_PLANET
-      call exit_mpi(myrank,'incorrect moho stretching in moho_stretching_honor_crust() routine')
+      if (R220 - r * R_PLANET > TOL) then
+        print *,'Error moho stretching: ',r*R_PLANET,R220,moho_radius*R_PLANET
+        call exit_mpi(myrank,'incorrect moho stretching in moho_stretching_honor_crust() routine')
+      endif
     endif
 
     ! counts corners above moho

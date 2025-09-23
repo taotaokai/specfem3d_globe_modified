@@ -172,6 +172,10 @@
         ! sets element flag for mantle
         elem_in_mantle = .true.
       endif
+    !KTAO get correct elem_in_crust/mantle value for USE_LOCAL_MESH
+    else if (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH) then
+          call moho_stretching_honor_crust(xelm,yelm,zelm, &
+                                           elem_in_crust,elem_in_mantle)
     else
       ! 1D crust, no stretching
       ! sets element flags
