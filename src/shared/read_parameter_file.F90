@@ -43,6 +43,9 @@
   ! local variables
   integer :: ier
 
+  integer :: ilayer !KTAO add
+  character(len=40)  :: parameter_name
+
   ! opens the parameter file: DATA/Par_file
   call open_parameter_file(ier)
   if (ier /= 0) stop 'an error occurred while opening the parameter file'
@@ -357,6 +360,7 @@
   if (REGIONAL_MESH_CUTOFF) then
     ! flag to switch on local mesh
     call read_value_logical(USE_LOCAL_MESH, 'USE_LOCAL_MESH', ier); ier = 0
+    print *,'******* USE_LOCAL_MESH = ',USE_LOCAL_MESH
 
     ! total number of mesh layers for local mesh
     ! (moho used will be the fictitious moho depth, i.e., at 40 or 35 km depth depending on EARTH_RMOHO_STRETCH_ADJUSTMENT)
@@ -371,6 +375,30 @@
     call read_value_integer(NZ_DOUBLING_3, 'NZ_DOUBLING_3', ier); ier = 0
     call read_value_integer(NZ_DOUBLING_4, 'NZ_DOUBLING_4', ier); ier = 0
     call read_value_integer(NZ_DOUBLING_5, 'NZ_DOUBLING_5', ier); ier = 0
+
+    if (USE_LOCAL_MESH) then
+      !KTAO mesh layers
+      call read_value_integer(LOCAL_MESH_NUMBER_OF_LAYERS, 'LOCAL_MESH_NUMBER_OF_LAYERS', ier); ier = 0
+      print *,'LOCAL_MESH_NUMBER_OF_LAYERS = ', LOCAL_MESH_NUMBER_OF_LAYERS
+      if (LOCAL_MESH_NUMBER_OF_LAYERS > MAX_NUMBER_OF_MESH_LAYERS) then
+        write(*,*) 'Error: number of mesh layers exceeds maximum allowed number of mesh layers'
+        write(*,*) 'Maximum number of mesh layers allowed is ', MAX_NUMBER_OF_MESH_LAYERS
+        stop 'Error reading Par_file'
+      endif
+      do ilayer = 1, LOCAL_MESH_NUMBER_OF_LAYERS
+        write(parameter_name, '(A, I0)') 'LOCAL_MESH_NER_', ilayer
+        call read_value_integer(LOCAL_MESH_NER(ilayer), parameter_name, ier); ier = 0
+        print *,'LOCAL_MESH_NER(', ilayer, ') = ', LOCAL_MESH_NER(ilayer)
+
+        write(parameter_name, '(A, I0)') 'LOCAL_MESH_BOTTOM_DEPTH_', ilayer
+        call read_value_double_precision(LOCAL_MESH_BOTTOM_DEPTH(ilayer), parameter_name, ier); ier = 0
+        print *,'LOCAL_MESH_BOTTOM_DEPTH(', ilayer, ') = ', LOCAL_MESH_BOTTOM_DEPTH(ilayer)
+
+        write(parameter_name, '(A, I0)') 'LOCAL_MESH_DOUBLING_', ilayer
+        call read_value_logical(LOCAL_MESH_DOUBLING(ilayer), parameter_name, ier); ier = 0
+        print *,'LOCAL_MESH_DOUBLING(', ilayer, ') = ', LOCAL_MESH_DOUBLING(ilayer)
+      enddo
+    endif 
 
     ! no error checking, continue if not available
   endif

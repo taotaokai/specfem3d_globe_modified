@@ -55,6 +55,8 @@
 
   use constants, only: MAX_STRING_LEN
 
+  use constants, only: MAX_NUMBER_OF_MESH_LAYERS !KTAO add
+
   implicit none
 
   ! parameters read from parameter file
@@ -212,6 +214,15 @@
   integer :: NZ_DOUBLING_3 = 0
   integer :: NZ_DOUBLING_4 = 0
   integer :: NZ_DOUBLING_5 = 0
+
+  !KTAO: number of mesh layers
+  integer :: LOCAL_MESH_NUMBER_OF_LAYERS = 0  !KTAO add
+  !KTAO: number of elements along depth in each mesh layer
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: LOCAL_MESH_NER = 0
+  !KTAO: bottom depth of each mesh layer
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: LOCAL_MESH_BOTTOM_DEPTH = 0.d0
+  !KTAO: flag doubling in each mesh layer
+  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: LOCAL_MESH_DOUBLING = .false.
 
   ! (optional) scattering perturbations
   logical :: ADD_SCATTERING_PERTURBATIONS = .false.

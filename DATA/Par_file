@@ -112,16 +112,29 @@ REGIONAL_MESH_ADD_2ND_DOUBLING  = .false.
 USE_LOCAL_MESH = .false.
 # total number of mesh layers for local mesh
 # (moho used will be the fictitious moho depth, i.e., at 40 or 35 km depth depending on EARTH_RMOHO_STRETCH_ADJUSTMENT)
-NUMBER_OF_LAYERS_CRUST = 4
-NUMBER_OF_LAYERS_MANTLE = 36
+# NUMBER_OF_LAYERS_CRUST = 4
+# NUMBER_OF_LAYERS_MANTLE = 36
 # number of doubling layers
-NDOUBLINGS = 1
+# NDOUBLINGS = 1
 # position of doubling layer (counted from top down)
-NZ_DOUBLING_1 = 5
+# NZ_DOUBLING_1 = 5
 # NZ_DOUBLING_2 = 36
 # NZ_DOUBLING_3 = 30
 # NZ_DOUBLING_4 = 30
 # NZ_DOUBLING_5 = 30
+
+# number of mesh layers
+LOCAL_MESH_NUMBER_OF_LAYERS = 2
+# number of elments along depth direction in each mesh layer
+LOCAL_MESH_NER_1 = 4
+LOCAL_MESH_NER_2 = 8
+# bottom depth of each mesh layer (in km)
+LOCAL_MESH_BOTTOM_DEPTH_1 = 40.d0
+LOCAL_MESH_BOTTOM_DEPTH_2 = 200.d0
+# flag doubling of each mesh layer
+LOCAL_MESH_DOUBLING_1 = .false.
+LOCAL_MESH_DOUBLING_2 = .true.
+
 
 #-----------------------------------------------------------
 #

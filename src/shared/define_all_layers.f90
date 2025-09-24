@@ -1751,7 +1751,8 @@
   ! simpler local mesh feature
   if (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH) then
     ! re-defines a local mesh (if selected) with more number of doubling layers
-    call define_all_layers_for_local_mesh(NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer,rmins,rmaxs)
+    ! call define_all_layers_for_local_mesh(NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer,rmins,rmaxs)
+    call define_all_layers_for_local_mesh_2(NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer,rmins,rmaxs)
   endif
 
   ! debug
@@ -2233,3 +2234,177 @@
 
   end subroutine define_all_layers_for_local_mesh
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine define_all_layers_for_local_mesh_2(NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer,rmins,rmaxs)
+
+  use constants, only: myrank,MAX_NUMBER_OF_MESH_LAYERS,R_UNIT_SPHERE, &
+    IFLAG_CRUST,IFLAG_MANTLE_NORMAL,IFLAG_OUTER_CORE_NORMAL,IFLAG_INNER_CORE_NORMAL
+
+  use shared_parameters, only: R_PLANET,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
+    RTOPDDOUBLEPRIME,RCMB,RICB,R_CENTRAL_CUBE
+
+  use shared_parameters, only: ner_mesh_layers, &
+    ratio_sampling_array,this_region_has_a_doubling,doubling_index,r_bottom,r_top
+
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH, &
+    NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+
+  !KAO define local mesh parameters by ner, bottom depth and doubling flag 
+  use shared_parameters, only: USE_LOCAL_MESH, LOCAL_MESH_NUMBER_OF_LAYERS, &
+    LOCAL_MESH_NER, LOCAL_MESH_BOTTOM_DEPTH, LOCAL_MESH_DOUBLING
+
+  implicit none
+
+  integer,intent(inout) :: NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS),intent(inout) :: rmins,rmaxs
+
+  ! local parameters
+  ! mesh layering
+  integer :: ilayer,ilayer_top,ilayer_bottom,layer_thickness,rmesh_bottom
+
+  !---------------------------------------
+  ! MESHING PARAMETERS
+
+  ! debugging
+  logical, parameter :: DEBUG = .true.
+
+  !---------------------------------------
+
+  ! checks if anything to do
+  if (.not. REGIONAL_MESH_CUTOFF) return
+  if (.not. USE_LOCAL_MESH) return
+
+  ! default mesh layering:
+  ! NUMBER_OF_MESH_LAYERS - total number of ner_mesh_layers()
+  !                         crust/mantle: 1 to 10 + layer_offset, i.e., ner_mesh_layers(1 : 10+layer_offset)
+  !                         outer core: entries between, i.e., ner_mesh_layers(10+layer_offset + 1 : NUMBER_OF_MESH_LAYERS-1)
+  !                         inner core: last entry, i.e., ner_mesh_layers(NUMBER_OF_MESH_LAYERS)
+  !
+  ! for REGIONAL_MESH_CUTOFF, we assigned ner values of 0 to layers ner_mesh_layers(i) below the cut-off, say 400.
+  ! here, we will re-assign ner_mesh_layers(i) and rmins/rmax values to create a new local mesh,
+  ! with a cut-off below the desired depth.
+  
+  ! re-initializes for local mesh
+  ner_mesh_layers(:) = 0      ! number of element layers
+
+  this_region_has_a_doubling(:) = .false.
+  ! last_doubling_layer = 0
+
+  ratio_sampling_array(:) = 1 ! doubling ratio
+
+  r_top(:) = 0.d0
+  r_bottom(:) = 0.d0
+
+  rmins(:) = 0.d0
+  rmaxs(:) = 0.d0
+
+  ! global setup
+  ! inner core mesh
+  ! assigns last layer to inner core
+  doubling_index(NUMBER_OF_MESH_LAYERS) = IFLAG_INNER_CORE_NORMAL
+
+  r_top(NUMBER_OF_MESH_LAYERS) = RICB
+  r_bottom(NUMBER_OF_MESH_LAYERS) = R_CENTRAL_CUBE
+
+  rmaxs(NUMBER_OF_MESH_LAYERS) = RICB / R_PLANET
+  rmins(NUMBER_OF_MESH_LAYERS) = R_CENTRAL_CUBE / R_PLANET
+
+  ! outer core mesh
+  ! next layer(s) to outer core
+  ilayer_top = 10 + layer_offset + 1
+  ilayer_bottom = NUMBER_OF_MESH_LAYERS - 1
+
+  doubling_index(ilayer_top:ilayer_bottom) = IFLAG_OUTER_CORE_NORMAL
+
+  layer_thickness = (RICB - RCMB) / (ilayer_bottom - ilayer_top + 1)
+  do ilayer = ilayer_top,ilayer_bottom
+    r_top(ilayer) = RCMB + (ilayer - ilayer_top) * layer_thickness
+    r_bottom(ilayer) = RCMB + (ilayer - ilayer_top + 1) * layer_thickness
+  enddo
+  ! makes sure bottom has RICB limit, in case above incremental contribution has some numerical round-off error
+  r_bottom(ilayer_bottom) = RICB
+
+  rmaxs(ilayer_top:ilayer_bottom) = RCMB / R_PLANET
+  rmins(ilayer_top:ilayer_bottom) = RICB / R_PLANET
+
+  ! crust/mantle mesh
+  if (LOCAL_MESH_NUMBER_OF_LAYERS > 10 + layer_offset) then 
+    write(*,*) 'Error: LOCAL_MESH_NUMBER_OF_LAYERS > 10+layer_offset'
+    write(*,*) 'LOCAL_MESH_NUMBER_OF_LAYERS = ',LOCAL_MESH_NUMBER_OF_LAYERS
+    write(*,*) '10+layer_offset = ',10+layer_offset
+    stop 'Invalid LOCAL_MESH_NUMBER_OF_LAYERS values, must be less than 10+layer_offset'
+  endif
+
+  ! assigns layering for crust/mantle
+  do ilayer = 1,LOCAL_MESH_NUMBER_OF_LAYERS
+    ! sets doubling flag
+    ! NOTE no doubling in the first(top) layer
+    if (ilayer > 1 .and. LOCAL_MESH_DOUBLING(ilayer)) then
+        this_region_has_a_doubling(ilayer) = .true.
+
+        ! increases sampling ratio for doubling (and all following layers below will have same new ratio)
+        ratio_sampling_array(ilayer:MAX_NUMBER_OF_MESH_LAYERS) = 2 * ratio_sampling_array(ilayer)
+
+        ! checks ratio: result of NEX / ratio must have at least a value of 2, otherwise element count is off
+        if (NEX_PER_PROC_XI / ratio_sampling_array(ilayer) < 2 .or. NEX_PER_PROC_ETA / ratio_sampling_array(ilayer) < 2) then
+          print *,'Error invalid ratio_sampling_array value: layer ',ilayer
+          print *,'  NEX_PER_PROC XI/ETA  = ',NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+          print *,'  ratio_sampling_array = ',ratio_sampling_array(ilayer)
+          print *,'Please increase NEX_XI / NEX_ETA value in Par_file, or decrease the number of doubling layers'
+          stop 'Invalid number of doubling layers for NEX'
+        endif
+    endif
+
+    doubling_index(ilayer) = IFLAG_CRUST  ! will assign crust flag (to include stretching for topography)
+
+    ! top/bottom layer
+    if (ilayer == 1) then
+      r_top(ilayer) = R_PLANET
+      rmaxs(ilayer) = R_UNIT_SPHERE
+    else
+      r_top(ilayer) = r_bottom(ilayer - 1)
+      rmaxs(ilayer) = rmins(ilayer - 1)
+    endif
+    r_bottom(ilayer) = R_PLANET - LOCAL_MESH_BOTTOM_DEPTH(ilayer) * 1000.d0
+    rmins(ilayer) = r_bottom(ilayer) / R_PLANET
+
+    ner_mesh_layers(ilayer) = LOCAL_MESH_NER(ilayer)
+  enddo
+
+  ! set layers between REGIONAL_MESH_CUTOFF_DEPTH and CMB
+  REGIONAL_MESH_CUTOFF_DEPTH = LOCAL_MESH_BOTTOM_DEPTH(LOCAL_MESH_NUMBER_OF_LAYERS) ! km
+
+  rmesh_bottom = R_PLANET - REGIONAL_MESH_CUTOFF_DEPTH * 1000.d0
+
+  ilayer_top = LOCAL_MESH_NUMBER_OF_LAYERS + 1
+  ilayer_bottom = 10 + layer_offset
+  if (ilayer_bottom > ilayer_top) then
+    layer_thickness = (rmesh_bottom - RCMB) / (ilayer_bottom - ilayer_top + 1)
+    do ilayer = ilayer_top,ilayer_bottom
+      r_top(ilayer) = rmesh_bottom - (ilayer - ilayer_top) * layer_thickness
+      r_bottom(ilayer) = r_top(ilayer) - layer_thickness
+      rmaxs(ilayer) = r_top(ilayer) / R_PLANET
+      rmins(ilayer) = r_bottom(ilayer) / R_PLANET
+      doubling_index(ilayer) = IFLAG_MANTLE_NORMAL
+    enddo
+    r_bottom(ilayer_bottom) = RCMB
+    rmins(ilayer_bottom) = RCMB / R_PLANET
+  endif
+
+  !debug
+  if (DEBUG) then
+    print *
+    do ilayer = 1,NUMBER_OF_MESH_LAYERS
+      print *,'debug: local_mesh ilayer ',ilayer,'out of ',NUMBER_OF_MESH_LAYERS
+      print *,'debug:   ner / this_region_has_a_doubling / ratio_sampling_array ', &
+              ner_mesh_layers(ilayer),this_region_has_a_doubling(ilayer),ratio_sampling_array(ilayer)
+      print *,'debug:   r_top/r_bottom                                          ',r_top(ilayer),r_bottom(ilayer)
+      print *,'debug:   rmins/rmaxs                                             ',rmins(ilayer),rmaxs(ilayer)
+    enddo
+    print *
+  endif
+
+  end subroutine define_all_layers_for_local_mesh_2
