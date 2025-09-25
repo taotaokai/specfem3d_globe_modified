@@ -94,6 +94,10 @@ RECORD_LENGTH_IN_MINUTES        = 2.5d0
 #
 #-----------------------------------------------------------
 
+# (optional) for the stretching of crustal elements in the case of 3D models
+# the ratio between top and bottom element thicknesses of the crustal(top) mesh layer
+USER_MAX_RATIO_CRUST_STRETCHING = 0.5d0
+
 ## regional mesh cut-off
 # using this flag will cut-off the mesh in the mantle at a layer matching to the given cut-off depth.
 # this flag only has an effect for regional simulations, i.e., for NCHUNKS values less than 6.
@@ -108,7 +112,7 @@ REGIONAL_MESH_CUTOFF_DEPTH      = 400.d0
 #  Setting this flag to .true., will move the second one below the 220km-depth layer for regional mesh cut-offs only.)
 REGIONAL_MESH_ADD_2ND_DOUBLING  = .false.
 
-# # (optional) LOCAL MESH (only used when REGIONAL_MESH_CUTOFF = .true.)
+# (optional) LOCAL MESH (only used when REGIONAL_MESH_CUTOFF = .true.)
 USE_LOCAL_MESH = .false.
 # total number of mesh layers for local mesh
 # (moho used will be the fictitious moho depth, i.e., at 40 or 35 km depth depending on EARTH_RMOHO_STRETCH_ADJUSTMENT)
@@ -123,6 +127,7 @@ USE_LOCAL_MESH = .false.
 # NZ_DOUBLING_4 = 30
 # NZ_DOUBLING_5 = 30
 
+# (optional) define mesh layers
 # number of mesh layers
 LOCAL_MESH_NUMBER_OF_LAYERS = 2
 # number of elments along depth direction in each mesh layer

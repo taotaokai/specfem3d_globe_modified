@@ -1012,18 +1012,20 @@
   if (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH) then
     ! stretch_tab array uses indices index_radius & index_layer :
     !   stretch_tab( index_radius (1=top,2=bottom) , index_layer (1=first layer, 2=second layer,..) )
-    do i = 1,ner_mesh_layers(1)
-      ! top
-      if (i == 1) then
-        ! first layer
-        stretch_tab(1,i) = r_top(1)
-      else
-        ! top is bottom from layer above
-        stretch_tab(1,i) = stretch_tab(2,i-1)
-      endif
-      ! bottom
-      stretch_tab(2,i) = stretch_tab(1,i) - (r_top(1) - r_bottom(1))/ner_mesh_layers(1)
-    enddo
+    ! do i = 1,ner_mesh_layers(1)
+    !   ! top
+    !   if (i == 1) then
+    !     ! first layer
+    !     stretch_tab(1,i) = r_top(1)
+    !   else
+    !     ! top is bottom from layer above
+    !     stretch_tab(1,i) = stretch_tab(2,i-1)
+    !   endif
+    !   ! bottom
+    !   stretch_tab(2,i) = stretch_tab(1,i) - (r_top(1) - r_bottom(1))/ner_mesh_layers(1)
+    ! enddo
+    !KTAO stretching_function for USE_LOCAL_MESH
+    call stretching_function(r_top(1),r_bottom(1),ner_mesh_layers(1),stretch_tab) !KTAO
   else
     if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) then
       ! stretching function determines top and bottom of each element layer in the

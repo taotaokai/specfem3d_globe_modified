@@ -1041,6 +1041,8 @@
     REGIONAL_MOHO_MESH,HONOR_DEEP_MOHO, &
     REFERENCE_1D_MODEL
 
+  use shared_parameters, only: USER_MAX_RATIO_CRUST_STRETCHING !KTAO add
+
   use model_mars_1d_par, only: MARS_1D_RSURFACE
 
   implicit none
@@ -1167,6 +1169,12 @@
     REGIONAL_MOHO_MESH = EARTH_REGIONAL_MOHO_MESH
     HONOR_DEEP_MOHO = EARTH_HONOR_DEEP_MOHO
   end select
+
+  !KTAO overwrite with user defined crustal stretching
+  if (USER_MAX_RATIO_CRUST_STRETCHING > 0.d0 .and. USER_MAX_RATIO_CRUST_STRETCHING <= 1.d0) then
+    write(IMAIN,*) 'KTAO: USER_MAX_RATIO_CRUST_STRETCHING = ',USER_MAX_RATIO_CRUST_STRETCHING
+    MAX_RATIO_CRUST_STRETCHING = USER_MAX_RATIO_CRUST_STRETCHING
+  endif
 
   ! special cases - additional overwrites
   ! Berkeley model

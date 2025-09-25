@@ -207,7 +207,10 @@
   call bcast_all_singlei(NZ_DOUBLING_4)
   call bcast_all_singlei(NZ_DOUBLING_5)
 
-  !KTAO define local mesh by NER, bottom depth and doubling
+  !KTAO (optional) mesh stretching parameters
+  call bcast_all_singledp(USER_MAX_RATIO_CRUST_STRETCHING)
+
+  !KTAO (optional) define local mesh by NER, bottom depth and doubling
   call bcast_all_singlei(LOCAL_MESH_NUMBER_OF_LAYERS)
   call bcast_all_i(LOCAL_MESH_NER, MAX_NUMBER_OF_MESH_LAYERS)
   call bcast_all_dp(LOCAL_MESH_BOTTOM_DEPTH, MAX_NUMBER_OF_MESH_LAYERS)

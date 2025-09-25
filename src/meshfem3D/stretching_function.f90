@@ -32,6 +32,8 @@
 ! stretch_tab array uses indices index_radius & index_layer :
 !   stretch_tab( index_radius (1=top,2=bottom) , index_layer (1=first layer, 2=second layer,..) )
 
+!KTAO [2025-09-25] update layer thickness calculation by analytical expressions, instead of using an iterative method.
+
   use constants, only: myrank
   use shared_parameters, only: MAX_RATIO_CRUST_STRETCHING
 
@@ -42,55 +44,92 @@
   double precision, dimension (2,ner),intent(inout) :: stretch_tab
 
   ! local parameters
-  double precision :: value
-  ! for increasing execution speed but have less precision in stretching, increase step
-  ! not very effective algorithm, but sufficient : used once per proc for meshing.
-  double precision, parameter :: step = 0.001
-  integer :: i
+  integer :: i, N
+  double precision :: F, layer_thickness,th_layer,delta_th
+
+  logical, parameter :: DEBUG = .true.
 
   ! safety check
-  if (ner <= 1) call exit_MPI(myrank,'Invalid ner value for stretching_function() routine')
+  if (ner < 1) then 
+    write(*,*) 'Invalid value for ner: ',ner
+    call exit_MPI(myrank,'Invalid ner value for stretching_function() routine')
+  endif
+  if (MAX_RATIO_CRUST_STRETCHING <= 0.d0 .or. MAX_RATIO_CRUST_STRETCHING > 1.d0) then
+    write(*,*) 'Invalid value for MAX_RATIO_CRUST_STRETCHING: ',MAX_RATIO_CRUST_STRETCHING
+    write(*,*) 'valid range of MAX_RATIO_CRUST_STRETCHING is (0, 1]'
+    call exit_MPI(myrank,'Invalid MAX_RATIO_CRUST_STRETCHING value for stretching_function() routine')
+  endif
 
-  ! initializes array
-  ! for example: 2 element layers (ner=2)  for most probable resolutions (NEX < 1000) in the crust
-  !                      then stretch_tab(2,1) = 0.5 = stretch_tab(2,2)
-  do i = 1,ner
-    stretch_tab(2,i) = (1.d0/ner)
-  enddo
+  N = ner
+  F = 1.d0 / MAX_RATIO_CRUST_STRETCHING ! F = thickness(N) / thickness(1)
 
-  ! fill with ratio of the layer one thickness for each element
-  do while((stretch_tab(2,1) / stretch_tab(2,ner)) > MAX_RATIO_CRUST_STRETCHING)
-    if (modulo(ner,2) /= 0) then
-      value = -floor(ner/2.d0)*step
-    else
-      value = (0.5d0-floor(ner/2.d0))*step
-    endif
-    do i = 1,ner
-      stretch_tab(2,i) = stretch_tab(2,i) + value
-      value = value + step
+  if (F == 1 .or. N == 1) then
+    ! regular layer thickness
+    layer_thickness = (r_top - r_bottom) / N
+    stretch_tab(1,1) = r_top
+    do i=1,N-1
+      stretch_tab(2,i) = stretch_tab(1,i) - layer_thickness
+      stretch_tab(1,i+1) = stretch_tab(2,i)
     enddo
-  enddo
+    stretch_tab(2,N) = r_bottom ! set the bottom of the last layer to r_bottom in case of rounding errors
+  else
+    ! progressive layering, with coarsened layers from top down (1: top, N: bottom)
+    ! thickness of each layer forms an arithmetic sequence:
+    ! thickness(i) = thickness(1) + (i-1) * delta_th 
+    ! delta_th is chosen such that thickness(N) = F * thickness(1)
+    ! delta_th = (F - 1) / (N - 1) * thickness(1)
+    ! r_top - r_bottom = sum(thickness(i), i=1,N) = N * thickness(1) + delta_th * N * (N-1) / 2
+    th_layer = (r_top - r_bottom) / (N + (F - 1.d0) * N / 2) ! thickness of the first layer
+    delta_th = (F - 1) / dble(N - 1) * th_layer
+    stretch_tab(1,1) = r_top
+    do i = 1,N-1
+      layer_thickness = th_layer + dble(i - 1) * delta_th
+      stretch_tab(2,i) = stretch_tab(1,i) - layer_thickness
+      stretch_tab(1,i+1) = stretch_tab(2,i)
+    enddo
+    stretch_tab(2,N) = r_bottom ! set the bottom of the last layer to r_bottom in case of rounding errors
+  endif
 
-  ! deduce r_top and r_bottom
-  ! r_top
-  stretch_tab(1,1) = r_top
-  do i = 2,ner
-    stretch_tab(1,i) = sum(stretch_tab(2,i:ner))*(r_top-r_bottom) + r_bottom
-  enddo
+  ! ! initializes array
+  ! ! for example: 2 element layers (ner=2)  for most probable resolutions (NEX < 1000) in the crust
+  ! !                      then stretch_tab(2,1) = 0.5 = stretch_tab(2,2)
+  ! do i = 1,ner
+  !   stretch_tab(2,i) = (1.d0/ner)
+  ! enddo
 
-  ! r_bottom
-  stretch_tab(2,ner) = r_bottom
-  do i = 1,ner-1
-    stretch_tab(2,i) = stretch_tab(1,i+1)
-  enddo
+  ! ! fill with ratio of the layer one thickness for each element
+  ! do while((stretch_tab(2,1) / stretch_tab(2,ner)) > MAX_RATIO_CRUST_STRETCHING)
+  !   if (modulo(ner,2) /= 0) then
+  !     value = -floor(ner/2.d0)*step
+  !   else
+  !     value = (0.5d0-floor(ner/2.d0))*step
+  !   endif
+  !   do i = 1,ner
+  !     stretch_tab(2,i) = stretch_tab(2,i) + value
+  !     value = value + step
+  !   enddo
+  ! enddo
+
+  ! ! deduce r_top and r_bottom
+  ! ! r_top
+  ! stretch_tab(1,1) = r_top
+  ! do i = 2,ner
+  !   stretch_tab(1,i) = sum(stretch_tab(2,i:ner))*(r_top-r_bottom) + r_bottom
+  ! enddo
+
+  ! ! r_bottom
+  ! stretch_tab(2,ner) = r_bottom
+  ! do i = 1,ner-1
+  !   stretch_tab(2,i) = stretch_tab(1,i+1)
+  ! enddo
 
   ! debug
-  !if (myrank == 0) then
-  !  print *,'debug: stretch tab top ',stretch_tab(1,:)
-  !  do i = 1,ner-1
-  !    print *,'debug: stretch layer ',i,'thickness',stretch_tab(1,i) - stretch_tab(2,i),'top/bottom',r_top,r_bottom
-  !  enddo
-  !endif
+  if (DEBUG .and. myrank == 0) then
+    print *,'mesh layer top/bottom',r_top,r_bottom
+    do i = 1,ner
+      print *,'debug: ilayer=',i,'top=',stretch_tab(1,i),'bottom=',stretch_tab(2,i),'thickness',stretch_tab(1,i) - stretch_tab(2,i)
+    enddo
+  endif
 
   end subroutine stretching_function
 

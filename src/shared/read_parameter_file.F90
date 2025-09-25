@@ -356,6 +356,11 @@
 
   call read_value_logical(USE_ECEF_COORDINATE, 'USE_ECEF_COORDINATE', ier); ier = 0  !! KTAO: default to .false. in shared_par.f90
 
+  !KTAO (optional) mesh stretching parameters
+  ! for the stretching of crustal elements in the case of 3D models
+  ! define the ratio between top and bottom element thickesses of the crustal(top) mesh layer
+  call read_value_double_precision(USER_MAX_RATIO_CRUST_STRETCHING, 'USER_MAX_RATIO_CRUST_STRETCHING', ier); ier = 0
+
   ! (optional) regional local mesh parameters
   if (REGIONAL_MESH_CUTOFF) then
     ! flag to switch on local mesh
@@ -377,7 +382,7 @@
     call read_value_integer(NZ_DOUBLING_5, 'NZ_DOUBLING_5', ier); ier = 0
 
     if (USE_LOCAL_MESH) then
-      !KTAO mesh layers
+      !KTAO define mesh layers
       call read_value_integer(LOCAL_MESH_NUMBER_OF_LAYERS, 'LOCAL_MESH_NUMBER_OF_LAYERS', ier); ier = 0
       print *,'LOCAL_MESH_NUMBER_OF_LAYERS = ', LOCAL_MESH_NUMBER_OF_LAYERS
       if (LOCAL_MESH_NUMBER_OF_LAYERS > MAX_NUMBER_OF_MESH_LAYERS) then
