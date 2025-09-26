@@ -39,6 +39,7 @@
   integer :: ipass
   integer :: ier
   integer :: offset_proc_xi,offset_proc_eta
+  integer :: ilayer !KTAO add
 
   ! user output
   if (myrank == 0) then
@@ -82,10 +83,16 @@
       write(IMAIN,*)
       if (USE_LOCAL_MESH) then
         write(IMAIN,*) '  using local mesh layout'
-        write(IMAIN,*) '  number of layers in crust  = ',LOCAL_MESH_NUMBER_OF_LAYERS_CRUST
-        write(IMAIN,*) '  number of layers in mantle = ',LOCAL_MESH_NUMBER_OF_LAYERS_MANTLE
-        write(IMAIN,*) '  number of doubling layers  = ',NDOUBLINGS
+        !KTAO change to user defined ner,bottom_depth,doubling
+        ! write(IMAIN,*) '  number of layers in crust  = ',LOCAL_MESH_NUMBER_OF_LAYERS_CRUST
+        ! write(IMAIN,*) '  number of layers in mantle = ',LOCAL_MESH_NUMBER_OF_LAYERS_MANTLE
+        ! write(IMAIN,*) '    number of doubling layers  = ',NDOUBLINGS
         write(IMAIN,*)
+        write(IMAIN,*) '    number of mesh layers  = ',LOCAL_MESH_NUMBER_OF_LAYERS
+        do ilayer = 1,LOCAL_MESH_NUMBER_OF_LAYERS
+          write(IMAIN,*) '    layer ',ilayer,': ner,bottom_depth,doubing=', &
+            LOCAL_MESH_NER(ilayer),LOCAL_MESH_BOTTOM_DEPTH(ilayer),LOCAL_MESH_DOUBLING(ilayer)
+        enddo
       endif
     endif
     if (FULL_GRAVITY) then
