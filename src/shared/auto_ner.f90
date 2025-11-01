@@ -203,10 +203,10 @@
 
   select case (NGLLX)
   case (2)
-    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 1.0 ) ! 1.0
+    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - (-1.d0) ) ! 1.0 !KTAO bugfix
 
   case (3)
-    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.0 ) ! 0.5
+    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.d0 ) ! 0.5
 
   case (4)
     MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - sqrt(1.d0 / 5.d0) ) ! 0.2764

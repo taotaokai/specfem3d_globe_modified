@@ -41,7 +41,7 @@
   double precision :: MIN_GLL_POINT_SPACING,MIN_GLL_POINT_SPACING_NGLL5
   integer :: nex_max_auto_ner_estimate
 
-  double precision :: max_nex_per_degree, min_element_width_deg !KTAO add
+  double precision :: ratio, max_nex_per_degree, min_element_width_deg !KTAO add
 
   ! initializes
   DT = 0.d0
@@ -502,25 +502,44 @@
 
       R_CENTRAL_CUBE = 985000.d0
 
+
+    ! scale with respect to 1248 if above that limit
     else
-      ! scale with respect to 1248 if above that limit
-      DT                       = 0.0462d0 * 1248.d0 / (2.d0*NEX_MAX)
+      ! KTAO commented out
+      ! DT                       = 0.0462d0 * 1248.d0 / (2.d0*NEX_MAX)
 
       MIN_ATTENUATION_PERIOD   = 4.d0
       MAX_ATTENUATION_PERIOD   = 200.d0
 
-      ! adding more layering
-      NER_CRUST                = nint(3 * 2.d0*NEX_MAX / 1248.d0)
-      NER_80_MOHO              = nint(6 * 2.d0*NEX_MAX / 1248.d0)
-      NER_220_80               = nint(9 * 2.d0*NEX_MAX / 1248.d0)
-      NER_400_220              = nint(14 * 2.d0*NEX_MAX / 1248.d0)
-      NER_600_400              = nint(14 * 2.d0*NEX_MAX / 1248.d0)
-      NER_670_600              = nint(5 * 2.d0*NEX_MAX / 1248.d0)
-      NER_771_670              = nint(6 * 2.d0*NEX_MAX / 1248.d0)
-      NER_TOPDDOUBLEPRIME_771  = nint(114 * 2.d0*NEX_MAX / 1248.d0)
-      NER_CMB_TOPDDOUBLEPRIME  = nint(8 * 2.d0*NEX_MAX / 1248.d0)
-      NER_OUTER_CORE           = nint(124 * 2.d0*NEX_MAX / 1248.d0)
-      NER_TOP_CENTRAL_CUBE_ICB = nint(13 * 2.d0*NEX_MAX / 1248.d0)
+      ! KTAO commented out
+      ! ! adding more layering
+      ! NER_CRUST                = nint(3 * 2.d0*NEX_MAX / 1248.d0)
+      ! NER_80_MOHO              = nint(6 * 2.d0*NEX_MAX / 1248.d0)
+      ! NER_220_80               = nint(9 * 2.d0*NEX_MAX / 1248.d0)
+      ! NER_400_220              = nint(14 * 2.d0*NEX_MAX / 1248.d0)
+      ! NER_600_400              = nint(14 * 2.d0*NEX_MAX / 1248.d0)
+      ! NER_670_600              = nint(5 * 2.d0*NEX_MAX / 1248.d0)
+      ! NER_771_670              = nint(6 * 2.d0*NEX_MAX / 1248.d0)
+      ! NER_TOPDDOUBLEPRIME_771  = nint(114 * 2.d0*NEX_MAX / 1248.d0)
+      ! NER_CMB_TOPDDOUBLEPRIME  = nint(8 * 2.d0*NEX_MAX / 1248.d0)
+      ! NER_OUTER_CORE           = nint(124 * 2.d0*NEX_MAX / 1248.d0)
+      ! NER_TOP_CENTRAL_CUBE_ICB = nint(13 * 2.d0*NEX_MAX / 1248.d0)
+
+      ! KTAO modified
+      ratio = (max_nex_per_degree * multiplication_factor) / (1248/90.0)
+
+      DT                       = 0.0462d0 / ratio
+      NER_CRUST                = nint(3   * ratio)
+      NER_80_MOHO              = nint(6   * ratio)
+      NER_220_80               = nint(9   * ratio)
+      NER_400_220              = nint(14  * ratio)
+      NER_600_400              = nint(14  * ratio)
+      NER_670_600              = nint(5   * ratio)
+      NER_771_670              = nint(6   * ratio)
+      NER_TOPDDOUBLEPRIME_771  = nint(114 * ratio)
+      NER_CMB_TOPDDOUBLEPRIME  = nint(8   * ratio)
+      NER_OUTER_CORE           = nint(124 * ratio)
+      NER_TOP_CENTRAL_CUBE_ICB = nint(13  * ratio)
 
       R_CENTRAL_CUBE = 985000.d0
     endif
@@ -608,7 +627,10 @@
   ! adapts number of layer elements and time step size
   ! (for regional simulations with chunk sizes < 90 degrees)
   ! (or very, very large meshes)
-  if (min_chunk_width_in_degrees < 90.0d0 .or. NEX_MAX > nex_max_auto_ner_estimate) then
+
+  ! if (min_chunk_width_in_degrees < 90.0d0 .or. NEX_MAX > nex_max_auto_ner_estimate) then
+  if (.true.) then !KTAO: force to use auto ner
+
     ! adapts number of layer elements and time step size
 
     ! note: for global simulations, we set
