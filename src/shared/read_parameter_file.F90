@@ -360,6 +360,8 @@
   ! for the stretching of crustal elements in the case of 3D models
   ! define the ratio between top and bottom element thickesses of the crustal(top) mesh layer
   call read_value_double_precision(USER_MAX_RATIO_CRUST_STRETCHING, 'USER_MAX_RATIO_CRUST_STRETCHING', ier); ier = 0
+  call read_value_double_precision(USER_RMOHO_STRETCH_ADJUSTMENT, 'USER_RMOHO_STRETCH_ADJUSTMENT', ier); ier = 0
+  call read_value_double_precision(USER_R80_STRETCH_ADJUSTMENT, 'USER_R80_STRETCH_ADJUSTMENT', ier); ier = 0
 
   ! (optional) regional local mesh parameters
   if (REGIONAL_MESH_CUTOFF) then

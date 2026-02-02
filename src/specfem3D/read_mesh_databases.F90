@@ -410,7 +410,7 @@
                               rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                               NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
                               b_rmassx_crust_mantle,b_rmassy_crust_mantle)
-     else
+    else
       call read_arrays_solver(IREGION_CRUST_MANTLE, &
                               NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
                               nspec_iso,nspec_tiso,nspec_ani, &
