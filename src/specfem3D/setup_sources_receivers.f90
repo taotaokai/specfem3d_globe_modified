@@ -1391,8 +1391,9 @@
     filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
     filename_new = trim(OUTPUT_FILES)//'/sr.vtk'
     write(command, &
-  "('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,'<',a,'>',a)")&
-      "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new)
+  "('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,'<',a,'>',a,a1)")&
+      "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new),CHAR(0) 
+    !KTAO: append null character to explicitly indicate string termination
 
     ! calls as system command (system needs to have `sed` command)
     call system_command(command)
@@ -1401,8 +1402,8 @@
     filename_new = trim(OUTPUT_FILES)//'/receiver.vtk'
     write(command, &
   "('awk ',a1,'{if (NR < 5) print $0;if (NR == 6)&
-   &print ',a1,'POINTS',i6,' float',a1,';if (NR > 5+',i6,')print $0}',a1,'<',a,'>',a)")&
-      "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new)
+   &print ',a1,'POINTS',i6,' float',a1,';if (NR > 5+',i6,')print $0}',a1,'<',a,'>',a,a1)")&
+      "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new),CHAR(0)
 
     ! calls as system command (system needs to have `awk` command)
     call system_command(command)
@@ -1410,8 +1411,8 @@
     ! only extract source locations and remove temporary file
     filename_new = trim(OUTPUT_FILES)//'/source.vtk'
     write(command, &
-  "('awk ',a1,'{if (NR < 6 + ',i6,') print $0}END{print}',a1,'<',a,'>',a,'; rm -f ',a)")&
-      "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename)
+  "('awk ',a1,'{if (NR < 6 + ',i6,') print $0}END{print}',a1,'<',a,'>',a,'; rm -f ',a,a1)")&
+      "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename),CHAR(0)
 
     ! calls as system command (system needs to have `awk` command)
     call system_command(command)
