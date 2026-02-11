@@ -99,6 +99,8 @@ RECORD_LENGTH_IN_MINUTES        = 2.5d0
 USER_MAX_RATIO_CRUST_STRETCHING = 0.5d0
 USER_RMOHO_STRETCH_ADJUSTMENT = 0.0d0
 USER_R80_STRETCH_ADJUSTMENT = 0.0d0
+USER_SUPPRESS_MOHO_STRETCHING = .false.
+USER_SUPPRESS_INTERNAL_TOPOGRAPHY = .false.
 
 ## regional mesh cut-off
 # using this flag will cut-off the mesh in the mantle at a layer matching to the given cut-off depth.

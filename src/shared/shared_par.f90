@@ -196,6 +196,8 @@
   double precision :: USER_MAX_RATIO_CRUST_STRETCHING = -1.d0 ! -1 means not set, will use values in constants.h
   double precision :: USER_RMOHO_STRETCH_ADJUSTMENT = 999999.d0 ! 999999 means not set, default RMOHO is at 40 km depth
   double precision :: USER_R80_STRETCH_ADJUSTMENT = 999999.d0 ! default R90 is at 80 km depth, 999999 means not set
+  logical :: USER_SUPPRESS_MOHO_STRETCHING = .false.
+  logical :: USER_SUPPRESS_INTERNAL_TOPOGRAPHY = .false.
 
   ! (optional) local mesh parameters
   ! for regional cutoff meshes (REGIONAL_MESH_CUTOFF must be .true. in Par_file)

@@ -362,6 +362,8 @@
   call read_value_double_precision(USER_MAX_RATIO_CRUST_STRETCHING, 'USER_MAX_RATIO_CRUST_STRETCHING', ier); ier = 0
   call read_value_double_precision(USER_RMOHO_STRETCH_ADJUSTMENT, 'USER_RMOHO_STRETCH_ADJUSTMENT', ier); ier = 0
   call read_value_double_precision(USER_R80_STRETCH_ADJUSTMENT, 'USER_R80_STRETCH_ADJUSTMENT', ier); ier = 0
+  call read_value_logical(USER_SUPPRESS_MOHO_STRETCHING, 'USER_SUPPRESS_MOHO_STRETCHING', ier); ier = 0
+  call read_value_logical(USER_SUPPRESS_INTERNAL_TOPOGRAPHY, 'USER_SUPPRESS_INTERNAL_TOPOGRAPHY', ier); ier = 0
 
   ! (optional) regional local mesh parameters
   if (REGIONAL_MESH_CUTOFF) then

@@ -411,11 +411,13 @@
   double precision, parameter :: EARTH_DEPTH_FOURTH_DOUBLING_OPTIMAL = 5000000.d0
 
 ! to suppress element stretching for 3D moho surface
-  logical,parameter :: SUPPRESS_MOHO_STRETCHING = .false.
+  ! logical,parameter :: SUPPRESS_MOHO_STRETCHING = .false.
+  logical :: SUPPRESS_MOHO_STRETCHING = .false.
 
 ! to suppress element stretching at 410/660 internal topography
 ! (i.e. creates mesh without 410/660 topography for Harvard model (s362ani,..))
-  logical,parameter :: SUPPRESS_INTERNAL_TOPOGRAPHY = .false.
+  ! logical,parameter :: SUPPRESS_INTERNAL_TOPOGRAPHY = .false.
+  logical :: SUPPRESS_INTERNAL_TOPOGRAPHY = .false.
 
 ! by default, SAVE_MESH_FILES will use VTK formats; this will also output additional AVS_DX format files
   logical,parameter :: SAVE_MESHFILES_AVS_DX_FORMAT = .false.
