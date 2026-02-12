@@ -1422,8 +1422,9 @@
     R220 = 6151000.d0
     R400 = 5961000.d0           ! 410km discontinuity
     R600 = 5771000.d0
-    R670 = 5721000.d0           ! 650km discontinuity
+    ! R670 = 5721000.d0           ! 650km discontinuity
     ! R670 = 5701000.d0           ! KTAO force to 670km for Europe case
+    R670 = 5686000.d0           ! KTAO force to 685km for 30sec case
     R771 = 5600000.d0
     RTOPDDOUBLEPRIME = 3630000.d0
     RCMB = 3479958.d0
