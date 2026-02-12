@@ -350,11 +350,16 @@ static void output_cuda_device_infos(int myrank){
       }else{
         fprintf(fp,"  canMapHostMemory: FALSE\n");
       }
-      if (deviceProp.deviceOverlap) {
+#if CUDA_VERSION < 13000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 13))
+      if (deviceProp.deviceOverlap){
         fprintf(fp,"  deviceOverlap: TRUE\n");
       }else{
         fprintf(fp,"  deviceOverlap: FALSE\n");
       }
+#else
+      // CUDA version >= 13, deviceOverlap deprecated, replaced by asyncEngineCount
+      fprintf(fp,"  asyncEngineCount: %d\n", deviceProp.asyncEngineCount);
+#endif
       if (deviceProp.concurrentKernels) {
         fprintf(fp,"  concurrentKernels: TRUE\n");
       }else{

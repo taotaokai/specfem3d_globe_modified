@@ -32,7 +32,7 @@
                                           c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
 ! rotates from local radial symmetry given by Love parameterization
-! to global global reference frame used in SPECFEM3D
+! to global reference frame used in SPECFEM3D
 
   implicit none
 
@@ -107,7 +107,7 @@
                                                c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
 ! rotates from local azimuthal symmetry given by Love & Gc,Gs parameterization
-! to global global reference frame used in SPECFEM3D
+! to global reference frame used in SPECFEM3D
 
   implicit none
 
@@ -167,7 +167,7 @@
                                                c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
 ! rotates from local symmetry given by aniso (Montagner) parameterization
-! to global global reference frame used in SPECFEM3D
+! to global reference frame used in SPECFEM3D
 
   implicit none
 
@@ -183,18 +183,68 @@
   double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
                       d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
 
+  ! construction of local stiffness matrix in Voigt notation
   ! general case (see also model_aniso_mantle.f90)
+  !
+  ! note: The expressions here follow from Chen & Tromp (2007), Appendix (A3) - (A7).
+  !       In particular, the Cartesian reference frame convention here is for Globe, where x denotes East, y North and z up.
+  !       The azimuth convention is measured counter-clockwise from due South.
+  !
+  !       Compared to the expressions like in Montagner & Nataf (1986) and others, these two conventions are different.
+  !       Montagner & Nataf (1986) uses azimuth measured clockwise from North as is usually done.
+  !       And, their Cartesian reference frame for the elastic coefficients Cij uses x in North direction,
+  !       y in East and z down.
+  !
+  !       Going from a local azimuth angle (zeta) measured counter-clockwise from South as used in Chen & Tromp (2007)
+  !       to an angle measured clockwise from North (zeta’), would mean zeta = pi - zeta’,
+  !       which would involve sign changes on the odd cosine terms and on the even sine terms, i.e.,
+  !         Jc’ = - Jc, Kc’ = - Kc, Mc’ = - Mc, Dc’ = - Dc
+  !       and
+  !         Gs’ = - Gs, Bs’ = - Bs, Hs’ = -Hs, Es’ = - Es,
+  !       respectively.
+  !
+  ! corresponding tensor derived for local azimuth measured clockwise from North:
+  !d11_prime = A + Ec + Bc            == d11
+  !d12_prime = A - 2.d0 * N - Ec      == d12
+  !d13_prime = F + Hc                 == d13
+  !d14_prime = Ds + 2.d0 * (Js + Ms)  == d14
+  !d15_prime = -2.d0 * Jc - Dc        == -d15
+  !d16_prime = 0.5d0 * Bs + Es        == -d16
+  !
+  !d22_prime = A + Ec - Bc            == d22
+  !d23_prime = F - Hc                 == d23
+  !d24_prime = 2.d0 * Js - Ds         == d24
+  !d25_prime = 2.d0 * (Mc - Jc) + Dc  == -d25
+  !d26_prime = 0.5d0 * Bs - Es        == -d26
+  !
+  !d33_prime = C                      == d33
+  !d34_prime = 2.d0 * (Js - Ks)       == d34
+  !d35_prime = 2.d0 * (Kc - Jc)       == -d35
+  !d36_prime = Hs                     == -d36
+  !
+  !d44_prime = L - Gc                 == d44
+  !d45_prime = Gs                     == -d45
+  !d46_prime = Dc - Mc                == -d46
+  !
+  !d55_prime = L + Gc                 == d55
+  !d56_prime = Ds - Ms                == d56
+  !
+  !d66_prime = N - Ec                 == d66
+  !
+  !TODO: we will need to check how to construct local tensors with different azimuth & reference frame conventions...
+  !
   d11 = A + Ec + Bc
   d12 = A - 2.d0 * N - Ec
   d13 = F + Hc
-  d14 = Ds + 2.d0 * Js + 2.d0 * Ms
+  d14 = Ds + 2.d0 * (Js + Ms)
   d15 = 2.d0 * Jc + Dc
   d16 = -0.5d0 * Bs - Es
+
   d22 = A + Ec - Bc
   d23 = F - Hc
   d24 = 2.d0 * Js - Ds
-  d25 = 2.d0 * Jc - 2.d0 * Mc - Dc
-  d26 = -Bs/2.d0 + Es
+  d25 = 2.d0 * (Jc - Mc) - Dc
+  d26 = -0.5d0 * Bs + Es
 
   d33 = C
   d34 = 2.d0 * (Js - Ks)
@@ -854,7 +904,7 @@
                                           c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
 ! rotates from local radial symmetry given by Love parameterization
-! to global global reference frame used in SPECFEM3D
+! to global reference frame used in SPECFEM3D
 
   implicit none
 
@@ -931,7 +981,7 @@
                                           c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
 ! rotates from local radial symmetry given by Love parameterization
-! to global global reference frame used in SPECFEM3D
+! to global reference frame used in SPECFEM3D
 
   implicit none
 

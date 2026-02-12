@@ -46,7 +46,7 @@
   use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON,R_PLANET, &
     TOPOGRAPHY
 
-  use shared_parameters, only: USE_LOCAL_MESH !KTAO add
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF, USE_LOCAL_MESH !KTAO add
 
   use meshfem_par, only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST,REFERENCE_CRUSTAL_MODEL
@@ -206,7 +206,7 @@
     endif
 
     !KTAO no moho stretching for USE_LOCAL_MESH
-    if (USE_LOCAL_MESH) then
+    if (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH) then
       do_mesh_stretching = .false.
     endif
 

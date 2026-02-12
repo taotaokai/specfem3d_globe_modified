@@ -53,8 +53,8 @@
   integer :: l,iblock,nblock,i,lbhalf,j,lx
   complex(kind=CUSTOM_CMPLX) :: wk, hold, q
   real(kind=CUSTOM_REAL) :: flx,inv_of_flx,v
-
-  real(kind=CUSTOM_REAL), parameter :: PI = acos(-1.0)
+  ! PI = acos(-1.0)
+  real(kind=CUSTOM_REAL), parameter :: TWO_PI = real(2.d0 * acos(-1.d0),kind=CUSTOM_REAL)
 
   ! added this sanity check
   if (npow > 30) stop 'Error: FTT routine has an hardwired maximum of 30 levels'
@@ -77,7 +77,7 @@
       FK = k
       flx = lx
 
-      v = zign * 2.0_CUSTOM_REAL * PI * FK / flx         ! Fourier convention
+      v = zign * TWO_PI * FK / flx         ! Fourier convention
 
       ! - sign: MATLAB convention: forward e^{-i om t}
       ! + sign: engineering convention: forward e^{i om t}
@@ -126,10 +126,12 @@
   if (zign > 0.0_CUSTOM_REAL) then
     ! FORWARD FFT
     xi(1:lx) = xi(1:lx) * dtt    ! multiplication by dt
+
   else
     ! REVERSE FFT
     flx = flx*dtt
     inv_of_flx = 1._CUSTOM_REAL / flx
+
 ! Aug 2016: changed to multiplication by the precomputed inverse to make the routine faster
 !       xi(1:lx) = xi(1:lx) / flx         ! division by dt
     xi(1:lx) = xi(1:lx) * inv_of_flx  ! division by dt
@@ -145,7 +147,7 @@
 
 ! inverse Fourier transform -- calls FFT
 
-  use constants
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -204,9 +206,11 @@
 
   end subroutine rspec
 
-!
 !-------------------------------------------------------------------------------------------------
 !
+! 3D FFT
+!
+!-------------------------------------------------------------------------------------------------
 
   subroutine fft_apply_3D_symmetry(array,N)
 
@@ -354,7 +358,7 @@
   integer :: i,j,k
 
   ! checks
-  if (npower_of_2 > 30) stop 'Error: the FTTinv_3D routine has an hardwired maximum of 30 levels'
+  if (npower_of_2 > 30) stop 'Error: the FTTinv_3D routine has a hardwired maximum of 30 levels'
 
 ! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &

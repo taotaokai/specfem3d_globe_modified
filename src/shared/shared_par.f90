@@ -32,7 +32,7 @@
   include "constants.h"
 
   ! proc number for MPI process
-  integer :: myrank
+  integer :: myrank = 0
 
   ! a negative initial value is a convention that indicates that groups
   ! (i.e. sub-communicators, one per run) are off by default

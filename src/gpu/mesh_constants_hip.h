@@ -50,6 +50,11 @@
 //#define LAUNCH_MIN_BLOCKS 7
 #endif
 
+// AMD MI350X
+#ifdef GPU_DEVICE_MI350
+#undef USE_LAUNCH_BOUNDS
+#endif
+
 /*----------------------------------------------------------------------------------------------- */
 
 // definitions

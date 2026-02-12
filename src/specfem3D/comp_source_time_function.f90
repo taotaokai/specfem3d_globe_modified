@@ -77,6 +77,39 @@
 
   end function comp_source_time_function_heavi
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  double precision function comp_source_time_function_ssq(t,hdur)
+  use constants, only: PI
+
+  implicit none
+
+  double precision,intent(in) :: t,hdur
+
+  ! Squared sinusoid STF used in PEGS. Avoids Gaussian in which tiny bits of energy are released
+  ! from -1.5t0. Energy release only starts at -t0
+  ! See, for example, https://doi.org/10.1016/j.epsl.2020.116150 where it is defined as
+  !    dM/dt = M0/tau sin^2(pi t/(2tau)) where tau is the hdur (not hdur Gaussian)
+  ! Note that this starts from -hdur instead of 0 as defined in attached DOI
+
+
+  if (t > -hdur .and. t < hdur) then
+    comp_source_time_function_ssq = 0.5d0 + ((1/(2.0d0*PI*hdur))*( (hdur * sin(PI*t/hdur)) + PI*t))
+  else
+  ! For regions outside the sinusoid:
+    if (t <= -hdur) then
+      comp_source_time_function_ssq = 0.0d0
+    else
+      comp_source_time_function_ssq = 1.0d0
+    endif
+  endif
+
+  end function comp_source_time_function_ssq
+
+
+!
 
 !
 !-------------------------------------------------------------------------------------------------

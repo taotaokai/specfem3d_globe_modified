@@ -238,6 +238,7 @@
   character(len=3),dimension(NDIM) :: comp
   character(len=MAX_STRING_LEN) :: filename, path_to_add
   character(len=MAX_STRING_LEN) :: adj_source_name
+  ! band code
   character(len=2) :: bic
 
   call band_instrument_code(DT,bic)

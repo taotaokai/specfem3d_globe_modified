@@ -716,6 +716,8 @@ contains
   ! --------------------------------
   subroutine check_variable_attributes(ncid, varid, unit, direction, missing_val)
 
+  use, intrinsic :: ieee_arithmetic
+
   implicit none
   integer, intent(in) :: ncid
   integer, intent(in) :: varid
@@ -724,14 +726,18 @@ contains
   ! local parameters
   integer :: num_atts,i
   character(len=100) :: name,value
-  real(kind=CUSTOM_REAL) :: fill_val
+  real(kind=CUSTOM_REAL) :: fill_val,val_read
   logical :: has_fill_value,has_missing_value
+
+! note: isNaN() function is a GNU extension, thus not all compilers might have it.
+!       using a simple val /= val check can already work.
+!       here, we double-check with the IEEE intrinsic function ieee_is_nan() which should be Fortran2003 standard.
 
   ! initializes
   unit        = 0
   direction   = 0
-  missing_val = 9999.0_CUSTOM_REAL
-  fill_val    = 9999.0_CUSTOM_REAL
+  missing_val = 99999.0_CUSTOM_REAL  ! initializes to some ficticious value
+  fill_val    = 99999.0_CUSTOM_REAL
 
   has_missing_value = .false.
   has_fill_value = .false.
@@ -804,22 +810,47 @@ contains
         endif
 
       else if (trim(name) == 'missing_value') then
+        ! initialize to avoid issues with netcdf function call
+        val_read = 0.0_CUSTOM_REAL
         ! assigns value for invalid entries
-        call check_status(nf90_get_att(ncid, varid, name, missing_val))
-        if (VERBOSE) print *,'      missing value: ',missing_val
+        call check_status(nf90_get_att(ncid, varid, name, val_read))
+        if (VERBOSE) print *,'      missing value: ',val_read
+        ! to avoid compiler running into floating-point invalid errors, we double-check if value is not-a-number
         has_missing_value = .true.
+        ! isNaN check
+        if (val_read /= val_read) then
+          ! NaN value
+          has_missing_value = .false.
+        else
+          has_missing_value = .true.
+        endif
+        ! double-check with ieee function
+        if (ieee_support_standard(val_read)) then
+          if (ieee_is_nan(val_read)) has_missing_value = .false.
+        endif
+        ! only assign if not NaN
+        if (has_missing_value) missing_val = val_read
 
       else if (trim(name) == '_FillValue' .or. trim(name) == 'FillValue') then
+        ! initialize to avoid issues with netcdf function call
+        val_read = 0.0_CUSTOM_REAL
         ! assigns value for invalid entries
-        call check_status(nf90_get_att(ncid, varid, name, fill_val))
-        if (VERBOSE) print *,'      fill value: ',fill_val
+        call check_status(nf90_get_att(ncid, varid, name, val_read))
+        if (VERBOSE) print *,'      fill value: ',val_read
+        ! to avoid compiler running into floating-point invalid errors, we double-check if value is not-a-number
+        has_fill_value = .true.
         ! isNaN check
-        if (fill_val /= fill_val) then
+        if (val_read /= val_read) then
           ! NaN value
           has_fill_value = .false.
         else
           has_fill_value = .true.
         endif
+        ! double-check with ieee function
+        if (ieee_support_standard(val_read)) then
+          if (ieee_is_nan(val_read)) has_fill_value = .false.
+        endif
+        if (has_fill_value) fill_val = val_read
 
       else if (trim(name) == 'long_name' .or. trim(name) == '_long_name') then
         ! assigns value for invalid entries
@@ -2886,6 +2917,22 @@ contains
   ! earth radii
   double precision, parameter :: RCMB_ = 3480000.d0
   double precision, parameter :: R_EARTH_ = 6371000.d0
+
+  ! initializes
+  dir_dep = 0
+  dir = 0
+
+  missing_val_vp  = 99999.0_CUSTOM_REAL     ! initializes to some ficticious value
+  missing_val_vs  = 99999.0_CUSTOM_REAL
+  missing_val_rho = 99999.0_CUSTOM_REAL
+  missing_val_dep = 99999.0_CUSTOM_REAL
+
+  missing_val_vpv = 99999.0_CUSTOM_REAL
+  missing_val_vph = 99999.0_CUSTOM_REAL
+  missing_val_vsv = 99999.0_CUSTOM_REAL
+  missing_val_vsh = 99999.0_CUSTOM_REAL
+  missing_val_eta = 99999.0_CUSTOM_REAL
+  missing_val_qmu = 99999.0_CUSTOM_REAL
 
   if (VERBOSE) print *,'reading EMC model:'
 
