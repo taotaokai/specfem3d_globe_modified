@@ -360,7 +360,8 @@
     R80,R220,R400,R600,R670,R771, &
     RTOPDDOUBLEPRIME,RCMB, &
     RMOHO_FICTITIOUS_IN_MESHER, &
-    R80_FICTITIOUS_IN_MESHER !KTAO add
+    R80_FICTITIOUS_IN_MESHER, & !KTAO add
+    SUPPRESS_MOHO_STRETCHING !KTAO add
 
   use constants, only: MAX_NUMBER_OF_MESH_LAYERS
   use shared_parameters, only: NER => NER_auto_ner
@@ -494,7 +495,8 @@
   ! initializes minimum Number of Elements a Region must have
   NER(:)    = 1
   NER(3:5)  = 2
-  if (CASE_3D) then
+  !KTAO modified to allow one element along radial direction in crust
+  if (SUPPRESS_MOHO_STRETCHING .and. CASE_3D) then ! if (CASE_3D) then
     NER(1) = 2
   endif
 
