@@ -496,7 +496,7 @@
   NER(:)    = 1
   NER(3:5)  = 2
   !KTAO modified to allow one element along radial direction in crust
-  if (SUPPRESS_MOHO_STRETCHING .and. CASE_3D) then ! if (CASE_3D) then
+  if (CASE_3D .and. (.not. SUPPRESS_MOHO_STRETCHING)) then ! if (CASE_3D) then
     NER(1) = 2
   endif
 
