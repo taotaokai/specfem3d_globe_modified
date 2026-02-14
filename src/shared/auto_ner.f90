@@ -493,11 +493,10 @@
 
   ! initializes minimum Number of Elements a Region must have
   NER(:)    = 1
-  ! KTAO: commented out
-  ! NER(3:5)  = 2
-  ! if (CASE_3D) then
-  !   NER(1) = 2
-  ! endif
+  NER(3:5)  = 2
+  if (CASE_3D) then
+    NER(1) = 2
+  endif
 
   ! specifies minimum element layers (in vertical direction) for top layer
   if (PLANET_TYPE == IPLANET_MARS .or. PLANET_TYPE == IPLANET_MOON) then

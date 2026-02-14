@@ -589,24 +589,22 @@
   end select
 
   ! in case we stretch the element layers to account for moho, we need at least 2 element layers in the crust
-  if (.not. SUPPRESS_MOHO_STRETCHING) then !KTAO only when using moho stretching
-    if (HONOR_1D_SPHERICAL_MOHO) then
-      ! 1D models honor 1D spherical moho
-      if (.not. ONE_CRUST) then
-        ! case 1D + two crustal layers
-        !
-        ! note: we use here 2 element layers for the crust to honor also the middle crust
-        !       for example, PREM distinguishes different constant velocities for upper crust (vp=5.8km/s, depth down to 15km)
-        !       and lower crust (vp=6.8km/s, depth down to 24.4km)
-        !
-        !       be aware that using 2 element layers in the crust will lead to very thin elements for the lower crust
-        !       which decreases significantly the time step size for stability
-        if (NER_CRUST < 2 ) NER_CRUST = 2
-      endif
-    else
-      ! 3D models: must have two element layers for crust
+  if (HONOR_1D_SPHERICAL_MOHO) then
+    ! 1D models honor 1D spherical moho
+    if (.not. ONE_CRUST) then
+      ! case 1D + two crustal layers
+      !
+      ! note: we use here 2 element layers for the crust to honor also the middle crust
+      !       for example, PREM distinguishes different constant velocities for upper crust (vp=5.8km/s, depth down to 15km)
+      !       and lower crust (vp=6.8km/s, depth down to 24.4km)
+      !
+      !       be aware that using 2 element layers in the crust will lead to very thin elements for the lower crust
+      !       which decreases significantly the time step size for stability
       if (NER_CRUST < 2 ) NER_CRUST = 2
     endif
+  else
+    ! 3D models: must have two element layers for crust
+    if (NER_CRUST < 2 ) NER_CRUST = 2
   endif
 
   !----
@@ -658,16 +656,15 @@
     if (dt_auto < DT) DT = dt_auto
 
     ! checks minimum number of element-layers in crust
-    if (.not. SUPPRESS_MOHO_STRETCHING) then !KTAO only when using moho stretching
-      if (HONOR_1D_SPHERICAL_MOHO) then
-        if (.not. ONE_CRUST) then
-          ! case 1D + two crustal layers
-          if (NER_CRUST < 2 ) NER_CRUST = 2
-        endif
-      else
-        ! case 3D
+    ! if (.not. SUPPRESS_MOHO_STRETCHING) then !KTAO only when using moho stretching
+    if (HONOR_1D_SPHERICAL_MOHO) then
+      if (.not. ONE_CRUST) then
+        ! case 1D + two crustal layers
         if (NER_CRUST < 2 ) NER_CRUST = 2
       endif
+    else
+      ! case 3D
+      if (NER_CRUST < 2 ) NER_CRUST = 2
     endif
 
     ! Mars & Moon
