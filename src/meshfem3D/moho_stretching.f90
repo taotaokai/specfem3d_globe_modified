@@ -317,8 +317,10 @@
 
   use constants, only: myrank, &
     NGNOD,TINYVAL,ONE, &
-    SUPPRESS_MOHO_STRETCHING, &
     USE_OLD_VERSION_FORMAT
+    ! SUPPRESS_MOHO_STRETCHING, & !KTAO: moved into shared_parameters 
+    
+  use shared_parameters, only: SUPPRESS_MOHO_STRETCHING !KTAO: add
 
   use shared_parameters, only: R_PLANET,HONOR_DEEP_MOHO
 
