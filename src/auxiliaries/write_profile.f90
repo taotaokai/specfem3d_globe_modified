@@ -618,7 +618,7 @@
 
   subroutine write_profile_setup()
 
-  use constants, only: IMAIN,myrank,N_SLS,NGLLX,NGLLY,NGLLZ,SUPPRESS_MOHO_STRETCHING
+  use constants, only: IMAIN,myrank,N_SLS,NGLLX,NGLLY,NGLLZ !KTAO ,SUPPRESS_MOHO_STRETCHING
   use meshfem_models_par
   use shared_parameters
 
