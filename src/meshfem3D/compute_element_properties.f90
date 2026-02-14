@@ -492,6 +492,9 @@
   use meshfem_models_par, only: &
     TRANSVERSE_ISOTROPY,USE_FULL_TISO_MANTLE,REFERENCE_1D_MODEL,THREE_D_MODEL
 
+  use meshfem_models_par, only: &
+    USE_TISO_ABOVE_220KM, USE_TISO_ABOVE_670KM !KTAO: add
+
   implicit none
 
   logical,intent(out) :: elem_is_tiso
@@ -515,8 +518,13 @@
     if (myrank == 0) then
       ! only output once
       write(IMAIN,*) '  setting tiso flags in mantle model'
-      if (USE_FULL_TISO_MANTLE) &
+      if (USE_TISO_ABOVE_220KM) then
+        write(IMAIN,*) '    using tiso above 220 km'
+      else if (USE_TISO_ABOVE_670KM) then
+        write(IMAIN,*) '    using tiso above 670 km'
+      else if (USE_FULL_TISO_MANTLE) then
         write(IMAIN,*) '    using fully transverse isotopic mantle'
+      endif
       if (USE_OLD_VERSION_FORMAT) &
         write(IMAIN,*) '    using formatting from old versions (7.0 to 8.0)'
       call flush_IMAIN()
@@ -526,6 +534,26 @@
   endif
 
   ! transverse isotropic models
+
+  !KTAO: add
+  if (USE_TISO_ABOVE_220KM) then 
+    if (idoubling(ispec) == IFLAG_220_80 &
+        .or. idoubling(ispec) == IFLAG_80_MOHO &
+        .or. idoubling(ispec) == IFLAG_CRUST) then
+        elem_is_tiso = .true.
+    endif
+    return
+  endif
+  if (USE_TISO_ABOVE_670KM) then 
+    if ( idoubling(ispec) == IFLAG_670_220 &
+        .or. idoubling(ispec) == IFLAG_220_80 &
+        .or. idoubling(ispec) == IFLAG_80_MOHO &
+        .or. idoubling(ispec) == IFLAG_CRUST) then
+        elem_is_tiso = .true.
+    endif
+    return
+  endif
+
   ! modifies tiso to have it for all mantle elements
   ! preferred for example, when using 1Dref (STW model)
   if (USE_FULL_TISO_MANTLE) then

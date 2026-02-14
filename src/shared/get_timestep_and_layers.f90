@@ -656,14 +656,16 @@
     if (dt_auto < DT) DT = dt_auto
 
     ! checks minimum number of element-layers in crust
-    if (.not. SUPPRESS_MOHO_STRETCHING) then !KTAO only when using moho stretching
-      if (HONOR_1D_SPHERICAL_MOHO) then
-        if (.not. ONE_CRUST) then
-          ! case 1D + two crustal layers
-          if (NER_CRUST < 2 ) NER_CRUST = 2
-        endif
-      else
-        ! case 3D
+    if (HONOR_1D_SPHERICAL_MOHO) then
+      if (.not. ONE_CRUST) then
+        ! case 1D + two crustal layers
+        if (NER_CRUST < 2 ) NER_CRUST = 2
+      endif
+    else
+      !KTAO: allow 1 crustal layer when SUPPRESS_MOHO_STRETCHING = .true.
+      ! case 3D
+      ! if (NER_CRUST < 2 ) NER_CRUST = 2
+      if (.not. SUPPRESS_MOHO_STRETCHING) then  
         if (NER_CRUST < 2 ) NER_CRUST = 2
       endif
     endif

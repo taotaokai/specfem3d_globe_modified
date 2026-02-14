@@ -455,7 +455,10 @@ APPROXIMATE_HESS_KL             = .false.
 # forces transverse isotropy for all mantle elements
 # (default is to use transverse isotropy only between crust and 220)
 # means we allow radial anisotropy throughout the whole crust/mantle region
-USE_FULL_TISO_MANTLE            = .false.
+# KTAO: set elements' TISO flag by the first true option
+USE_TISO_ABOVE_220KM            = .true.     # TISO from surface to 220KM depth (to asthenosphere)
+USE_TISO_ABOVE_670KM            = .false.    # TISO from surface to 670KM depth (upper mantle)
+USE_FULL_TISO_MANTLE            = .false.    # TISO from surface to CMB (whole crust & mantle)
 
 # output kernel mask to zero out source region
 # to remove large values near the sources in the sensitivity kernels

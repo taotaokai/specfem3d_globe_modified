@@ -155,6 +155,8 @@
              APPROXIMATE_HESS_KL
 
   logical :: USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK
+  logical :: USE_TISO_ABOVE_220KM = .false. !KTAO: add
+  logical :: USE_TISO_ABOVE_670KM = .false. !KTAO: add
 
   logical :: STEADY_STATE_KERNEL
   double precision :: STEADY_STATE_LENGTH_IN_MINUTES

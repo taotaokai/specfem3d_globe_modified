@@ -249,6 +249,8 @@
   call bcast_all_singledp(USER_T0)
   call bcast_all_singlei(NTSTEP_BETWEEN_COMPUTE_KERNELS)
   call bcast_all_singlei(USER_NT_DUMP_ATTENUATION)
+  call bcast_all_singlel(USE_TISO_ABOVE_220KM)
+  call bcast_all_singlel(USE_TISO_ABOVE_670KM)
 
   ! non-main processes set their parameters
   if (myrank /= 0) then
