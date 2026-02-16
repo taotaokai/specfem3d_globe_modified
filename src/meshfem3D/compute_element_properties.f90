@@ -217,9 +217,25 @@
   if (TOPOGRAPHY) then
     ! for models that need topography before assigning model velocities
     if (is_model_with_surface_topography) then
-      if (idoubling(ispec) == IFLAG_CRUST .or. &
-          idoubling(ispec) == IFLAG_220_80 .or. &
-          idoubling(ispec) == IFLAG_80_MOHO) then
+      ! if (idoubling(ispec) == IFLAG_CRUST .or. &
+      !     idoubling(ispec) == IFLAG_220_80 .or. &
+      !     idoubling(ispec) == IFLAG_80_MOHO) then
+      !   ! stretches mesh between surface and R220 accordingly
+      !   if (USE_GLL) then
+      !     ! stretches every GLL point accordingly
+      !     call add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo)
+      !   else
+      !     ! stretches anchor points only, interpolates GLL points later on
+      !     call add_topography(xelm,yelm,zelm,ibathy_topo)
+      !
+      !     ! re-interpolates GLL point locations
+      !     ! needed for get_model(..) routine to consider stretched locations in xstore,.. arrays
+      !     call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec,xstore,ystore,zstore,shape3D)
+      !   endif
+      ! endif
+      
+      !>KTAO: use all mesh layers for add_topography when USE_LOCAL_MESH
+      if (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH) then
         ! stretches mesh between surface and R220 accordingly
         if (USE_GLL) then
           ! stretches every GLL point accordingly
@@ -231,6 +247,23 @@
           ! re-interpolates GLL point locations
           ! needed for get_model(..) routine to consider stretched locations in xstore,.. arrays
           call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec,xstore,ystore,zstore,shape3D)
+        endif
+      else
+        if (idoubling(ispec) == IFLAG_CRUST .or. &
+            idoubling(ispec) == IFLAG_220_80 .or. &
+            idoubling(ispec) == IFLAG_80_MOHO) then
+          ! stretches mesh between surface and R220 accordingly
+          if (USE_GLL) then
+            ! stretches every GLL point accordingly
+            call add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo,r_bottom)
+          else
+            ! stretches anchor points only, interpolates GLL points later on
+            call add_topography(xelm,yelm,zelm,ibathy_topo,r_bottom)
+
+            ! re-interpolates GLL point locations
+            ! needed for get_model(..) routine to consider stretched locations in xstore,.. arrays
+            call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec,xstore,ystore,zstore,shape3D)
+          endif
         endif
       endif
     endif
@@ -281,9 +314,21 @@
   !       and crustal structures given with depth, not absolute position or altitude above sea-level.
   if (TOPOGRAPHY) then
     if (.not. is_model_with_surface_topography) then
-      if (idoubling(ispec) == IFLAG_CRUST .or. &
-          idoubling(ispec) == IFLAG_220_80 .or. &
-          idoubling(ispec) == IFLAG_80_MOHO) then
+      ! if (idoubling(ispec) == IFLAG_CRUST .or. &
+      !     idoubling(ispec) == IFLAG_220_80 .or. &
+      !     idoubling(ispec) == IFLAG_80_MOHO) then
+      !   ! stretches mesh between surface and R220 accordingly
+      !   if (USE_GLL) then
+      !     ! stretches every GLL point accordingly
+      !     call add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo)
+      !   else
+      !     ! stretches anchor points only, interpolates GLL points later on
+      !     call add_topography(xelm,yelm,zelm,ibathy_topo)
+      !   endif
+      ! endif
+
+      !>KTAO: use all mesh layers for add_topography when USE_LOCAL_MESH
+      if (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH) then
         ! stretches mesh between surface and R220 accordingly
         if (USE_GLL) then
           ! stretches every GLL point accordingly
@@ -291,6 +336,19 @@
         else
           ! stretches anchor points only, interpolates GLL points later on
           call add_topography(xelm,yelm,zelm,ibathy_topo)
+        endif
+      else
+        if (idoubling(ispec) == IFLAG_CRUST .or. &
+            idoubling(ispec) == IFLAG_220_80 .or. &
+            idoubling(ispec) == IFLAG_80_MOHO) then
+          ! stretches mesh between surface and R220 accordingly
+          if (USE_GLL) then
+            ! stretches every GLL point accordingly
+            call add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo)
+          else
+            ! stretches anchor points only, interpolates GLL points later on
+            call add_topography(xelm,yelm,zelm,ibathy_topo)
+          endif
         endif
       endif
     endif
