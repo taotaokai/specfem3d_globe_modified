@@ -216,6 +216,7 @@
 
   !KTAO (optional) define local mesh by NER, bottom depth and doubling
   call bcast_all_singlei(LOCAL_MESH_NUMBER_OF_LAYERS)
+  call bcast_all_singlei(LOCAL_MESH_TISO_LAYERS)
   call bcast_all_i(LOCAL_MESH_NER, MAX_NUMBER_OF_MESH_LAYERS)
   call bcast_all_dp(LOCAL_MESH_BOTTOM_DEPTH, MAX_NUMBER_OF_MESH_LAYERS)
   call bcast_all_l(LOCAL_MESH_DOUBLING, MAX_NUMBER_OF_MESH_LAYERS)

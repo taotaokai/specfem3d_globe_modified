@@ -228,6 +228,7 @@
 
   !KTAO: number of mesh layers
   integer :: LOCAL_MESH_NUMBER_OF_LAYERS = 0  !KTAO add
+  integer :: LOCAL_MESH_TISO_LAYERS = 0  !KTAO add
   !KTAO: number of elements along depth in each mesh layer
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: LOCAL_MESH_NER = 0
   !KTAO: bottom depth of each mesh layer

@@ -495,6 +495,8 @@
   use meshfem_models_par, only: &
     USE_TISO_ABOVE_220KM, USE_TISO_ABOVE_670KM !KTAO: add
 
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,USE_LOCAL_MESH !KTAO: add
+
   implicit none
 
   logical,intent(out) :: elem_is_tiso
@@ -535,6 +537,13 @@
 
   ! transverse isotropic models
 
+  !KTAO: add
+  if (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH) then
+    if (idoubling(ispec) == IFLAG_CRUST) then
+        elem_is_tiso = .true.
+    endif
+    return
+  endif
   !KTAO: add
   if (USE_TISO_ABOVE_220KM) then 
     if (idoubling(ispec) == IFLAG_220_80 &

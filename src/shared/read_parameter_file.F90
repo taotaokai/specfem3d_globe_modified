@@ -396,6 +396,8 @@
         write(*,*) 'Maximum number of mesh layers allowed is ', MAX_NUMBER_OF_MESH_LAYERS
         stop 'Error reading Par_file'
       endif
+      call read_value_integer(LOCAL_MESH_TISO_LAYERS, 'LOCAL_MESH_TISO_LAYERS', ier); ier = 0
+      print *,'LOCAL_MESH_TISO_LAYERS = ', LOCAL_MESH_TISO_LAYERS
       do ilayer = 1, LOCAL_MESH_NUMBER_OF_LAYERS
         write(parameter_name, '(A, I0)') 'LOCAL_MESH_NER_', ilayer
         call read_value_integer(LOCAL_MESH_NER(ilayer), parameter_name, ier); ier = 0

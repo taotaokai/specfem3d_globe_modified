@@ -89,6 +89,7 @@
         ! write(IMAIN,*) '    number of doubling layers  = ',NDOUBLINGS
         write(IMAIN,*)
         write(IMAIN,*) '    number of mesh layers  = ',LOCAL_MESH_NUMBER_OF_LAYERS
+        write(IMAIN,*) '    tiso layers  = ',LOCAL_MESH_TISO_LAYERS
         do ilayer = 1,LOCAL_MESH_NUMBER_OF_LAYERS
           write(IMAIN,*) '    layer ',ilayer,': ner,bottom_depth,doubing=', &
             LOCAL_MESH_NER(ilayer),LOCAL_MESH_BOTTOM_DEPTH(ilayer),LOCAL_MESH_DOUBLING(ilayer)

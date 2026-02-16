@@ -2254,7 +2254,8 @@
 
   !KAO define local mesh parameters by ner, bottom depth and doubling flag 
   use shared_parameters, only: USE_LOCAL_MESH, LOCAL_MESH_NUMBER_OF_LAYERS, &
-    LOCAL_MESH_NER, LOCAL_MESH_BOTTOM_DEPTH, LOCAL_MESH_DOUBLING
+    LOCAL_MESH_NER, LOCAL_MESH_BOTTOM_DEPTH, LOCAL_MESH_DOUBLING, &
+    LOCAL_MESH_TISO_LAYERS
 
   implicit none
 
@@ -2358,7 +2359,13 @@
         endif
     endif
 
-    doubling_index(ilayer) = IFLAG_CRUST  ! will assign crust flag (to include stretching for topography)
+    !KTAO
+    !doubling_index(ilayer) = IFLAG_CRUST  ! will assign crust flag (to include stretching for topography)
+    if (ilayer <= LOCAL_MESH_TISO_LAYERS) then
+      doubling_index(ilayer) = IFLAG_CRUST  ! used in compute_element_tiso_flag() to decide if element is tiso
+    else
+      doubling_index(ilayer) = IFLAG_MANTLE_NORMAL
+    endif
 
     ! top/bottom layer
     if (ilayer == 1) then
