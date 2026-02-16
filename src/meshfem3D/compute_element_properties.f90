@@ -255,10 +255,10 @@
           ! stretches mesh between surface and R220 accordingly
           if (USE_GLL) then
             ! stretches every GLL point accordingly
-            call add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo,r_bottom)
+            call add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo)
           else
             ! stretches anchor points only, interpolates GLL points later on
-            call add_topography(xelm,yelm,zelm,ibathy_topo,r_bottom)
+            call add_topography(xelm,yelm,zelm,ibathy_topo)
 
             ! re-interpolates GLL point locations
             ! needed for get_model(..) routine to consider stretched locations in xstore,.. arrays
