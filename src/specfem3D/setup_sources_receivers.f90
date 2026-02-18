@@ -1384,7 +1384,7 @@
 
   use specfem_par, only: myrank,OUTPUT_FILES,NSOURCES,nrec,MAX_STRING_LEN
 
-  use specfem_par, only: xyz_found_source, xyz_receiver !KTAO add
+  use specfem_par, only: IOUT_VTK, xyz_found_source, xyz_receiver !KTAO add
 
   implicit none
 
