@@ -1392,7 +1392,7 @@
   character(len=MAX_STRING_LEN) :: filename !,filename_new KTAO: commented out
   character(len=MAX_STRING_LEN) :: command
 
-  integer :: isrc, irec !KTAO: add
+  integer :: isrc, irec, ier !KTAO: add
 
   ! user output
   if (myrank == 0) then
