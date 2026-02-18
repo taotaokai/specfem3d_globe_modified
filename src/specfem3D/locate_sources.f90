@@ -182,12 +182,13 @@
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
   endif
 
-  ! appends locations to sr.vtk file
-  if (myrank == 0) then
-    open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
-          position='append',status='old',iostat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error opening and appending sources to file sr_tmp.vtk')
-  endif
+  !KTAO: commented out, will create vtk file in setup_sources_receivers_VTKfile()
+  ! ! appends locations to sr.vtk file
+  ! if (myrank == 0) then
+  !   open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
+  !         position='append',status='old',iostat=ier)
+  !   if (ier /= 0 ) call exit_MPI(myrank,'Error opening and appending sources to file sr_tmp.vtk')
+  ! endif
 
   ! loop on all the sources
   ! gather source information in subsets to reduce memory requirements
@@ -669,10 +670,11 @@
       endif
       write(IMAIN,*)
 
-      ! writes out actual source position to VTK file
-      write(IOUT_VTK,'(3e18.6)') sngl(xyz_found_source(1,isource)), &
-                                 sngl(xyz_found_source(2,isource)), &
-                                 sngl(xyz_found_source(3,isource))
+      !KTAO: comment out
+      ! ! writes out actual source position to VTK file
+      ! write(IOUT_VTK,'(3e18.6)') sngl(xyz_found_source(1,isource)), &
+      !                            sngl(xyz_found_source(2,isource)), &
+      !                            sngl(xyz_found_source(3,isource))
 
       ! get latitude, longitude and depth of the source that will be used
       call xyz_2_rlatlon_dble(xyz_found_source(1,isource), &
@@ -769,7 +771,7 @@
     call flush_IMAIN()
 
     ! closing sr_tmp.vtk
-    close(IOUT_VTK)
+    ! close(IOUT_VTK) !KTAO comment out
   endif
 
   ! main process broadcasts the results to all the slices

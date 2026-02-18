@@ -343,6 +343,7 @@ module specfem_par
   integer, dimension(:), allocatable :: islice_num_rec_local
 
   double precision, dimension(:), allocatable :: xi_receiver,eta_receiver,gamma_receiver
+  double precision, dimension(:,:), allocatable :: xyz_receiver !KTAO: add
   double precision, dimension(:,:,:), allocatable :: nu_rec
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
   double precision :: receiver_final_distance_max

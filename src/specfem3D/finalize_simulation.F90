@@ -264,6 +264,7 @@
   ! receivers
   deallocate(islice_selected_rec,ispec_selected_rec, &
              xi_receiver,eta_receiver,gamma_receiver)
+  if (myrank == 0) deallocate(xyz_receiver) !KTAO: add
   if (myrank == 0 .and. WRITE_SEISMOGRAMS_BY_MAIN) deallocate(islice_num_rec_local)
   deallocate(station_name,network_name, &
              stlat,stlon,stele,stbur)

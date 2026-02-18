@@ -45,6 +45,7 @@
     myrank,DT,NSTEP, &
     nrec,islice_selected_rec,ispec_selected_rec, &
     xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
+    xyz_receiver, & !KTAO add
     stlat,stlon,stele,stbur,nu_rec,receiver_final_distance_max, &
     RECEIVERS_CAN_BE_BURIED, &
     ibathy_topo,TOPOGRAPHY
@@ -424,9 +425,10 @@
   ! this is executed by the main process only
   if (myrank == 0) then
 
-    ! appends receiver locations to sr.vtk file
-    open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk',position='append',status='old',iostat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
+    ! KTAO: comment out, create vtk file in setup_sources_receivers_VTKfile()
+    ! ! appends receiver locations to sr.vtk file
+    ! open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk',position='append',status='old',iostat=ier)
+    ! if (ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
 
     ! chooses best receivers locations
     ! if receiver location is too far off, we will exclude the receiver
@@ -490,13 +492,15 @@
         epidist_found(nrec_found) = epidist(irec)
 
         ! writes out actual receiver location to VTK file
-        write(IOUT_VTK,'(3e18.6)') sngl(xyz_found(1,irec)), sngl(xyz_found(2,irec)), sngl(xyz_found(3,irec))
+        !KTAO commented out
+        ! write(IOUT_VTK,'(3e18.6)') sngl(xyz_found(1,irec)), sngl(xyz_found(2,irec)), sngl(xyz_found(3,irec))
       endif
     enddo
 
-    ! finishes sr_tmp.vtk file
-    write(IOUT_VTK,*)
-    close(IOUT_VTK)
+    !KTAO commented out
+    ! ! finishes sr_tmp.vtk file
+    ! write(IOUT_VTK,*)
+    ! close(IOUT_VTK)
 
     ! compute maximal distance for all the receivers
     receiver_final_distance_max = maxval(final_distance(:))
@@ -527,6 +531,7 @@
     xi_receiver(1:nrec) = xi_receiver_found(1:nrec)
     eta_receiver(1:nrec) = eta_receiver_found(1:nrec)
     gamma_receiver(1:nrec) = gamma_receiver_found(1:nrec)
+    xyz_receiver(:,1:nrec) = xyz_found(:,1:nrec) !KTAO: add
 
     station_name(1:nrec) = station_name_found(1:nrec)
     network_name(1:nrec) = network_name_found(1:nrec)

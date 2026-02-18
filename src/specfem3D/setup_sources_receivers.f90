@@ -660,20 +660,21 @@
   ! sources
   ! moved open statement and writing of first lines into sr.vtk before the
   ! call to locate_sources, where further write statements to that file follow
-  if (myrank == 0) then
-    ! write source and receiver VTK files for Paraview
-    filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
-    open(IOUT_VTK,file=trim(filename),status='unknown',iostat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error opening temporary file sr_temp.vtk')
-    write(IOUT_VTK,'(a)') '# vtk DataFile Version 2.0'
-    write(IOUT_VTK,'(a)') 'Source and Receiver VTK file'
-    write(IOUT_VTK,'(a)') 'ASCII'
-    write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-    !  LQY -- won't be able to know NSOURCES+nrec at this point...
-    write(IOUT_VTK, '(a,i6,a)') 'POINTS ', NSOURCES, ' float'
-    ! closing file, rest of information will be appended later on
-    close(IOUT_VTK)
-  endif
+  !>>>>>> KTAO: commented out, create vtk file in setup_sources_receivers_VTKfile()
+  ! if (myrank == 0) then
+  !   ! write source and receiver VTK files for Paraview
+  !   filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
+  !   open(IOUT_VTK,file=trim(filename),status='unknown',iostat=ier)
+  !   if (ier /= 0 ) call exit_MPI(myrank,'Error opening temporary file sr_temp.vtk')
+  !   write(IOUT_VTK,'(a)') '# vtk DataFile Version 2.0'
+  !   write(IOUT_VTK,'(a)') 'Source and Receiver VTK file'
+  !   write(IOUT_VTK,'(a)') 'ASCII'
+  !   write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+  !   !  LQY -- won't be able to know NSOURCES+nrec at this point...
+  !   write(IOUT_VTK, '(a,i6,a)') 'POINTS ', NSOURCES, ' float'
+  !   ! closing file, rest of information will be appended later on
+  !   close(IOUT_VTK)
+  ! endif
 
   ! locate sources in the mesh
   call locate_sources()
@@ -1065,6 +1066,12 @@
   ispec_selected_rec(:) = 0
   xi_receiver(:) = 0.d0; eta_receiver(:) = 0.d0; gamma_receiver(:) = 0.d0
   nu_rec(:,:,:) = 0.0d0
+  !KTAO: add
+  if (myrank == 0) then
+    allocate(xyz_receiver(NDIM,nrec), stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating xyz_receiver')
+    xyz_receiver(:,:) = 0.d0
+  endif
 
   allocate(station_name(nrec), &
            network_name(nrec), &
@@ -1376,46 +1383,104 @@
   subroutine setup_sources_receivers_VTKfile()
 
   use specfem_par, only: myrank,OUTPUT_FILES,NSOURCES,nrec,MAX_STRING_LEN
+
+  use specfem_par, only: xyz_found_source, xyz_receiver !KTAO add
+
   implicit none
 
   ! local parameters
-  character(len=MAX_STRING_LEN) :: filename,filename_new
+  character(len=MAX_STRING_LEN) :: filename !,filename_new KTAO: commented out
   character(len=MAX_STRING_LEN) :: command
+
+  integer :: isrc, irec !KTAO: add
 
   ! user output
   if (myrank == 0) then
 
-    ! finishes VTK file
-    !  we should know NSOURCES+nrec at this point...
-    ! creates source/receiver location file
-    filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
-    filename_new = trim(OUTPUT_FILES)//'/sr.vtk'
-    write(command, &
-  "('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,'<',a,'>',a,a1)")&
-      "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new),CHAR(0) 
-    !KTAO: append null character to explicitly indicate string termination
+    filename = trim(OUTPUT_FILES)//'/sr.vtk'
+    open(IOUT_VTK,file=trim(filename),status='unknown',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening '//filename)
+    write(IOUT_VTK,'(a)') '# vtk DataFile Version 2.0'
+    write(IOUT_VTK,'(a)') 'Source and Receiver VTK file'
+    write(IOUT_VTK,'(a)') 'ASCII'
+    write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+    write(IOUT_VTK, '(a,i6,a)') 'POINTS ', NSOURCES + nrec, ' float'
+    do isrc = 1, NSOURCES
+      write(IOUT_VTK,'(3e18.6)') sngl(xyz_found_source(1,isrc)), &
+                                 sngl(xyz_found_source(2,isrc)), &
+                                 sngl(xyz_found_source(3,isrc))
+    enddo
+    do irec = 1, nrec
+      write(IOUT_VTK,'(3e18.6)') sngl(xyz_receiver(1,irec)), &
+                                 sngl(xyz_receiver(2,irec)), &
+                                 sngl(xyz_receiver(3,irec))
+    enddo
+    close(IOUT_VTK)
 
-    ! calls as system command (system needs to have `sed` command)
-    call system_command(command)
+    filename = trim(OUTPUT_FILES)//'/source.vtk'
+    open(IOUT_VTK,file=trim(filename),status='unknown',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening '//filename)
+    write(IOUT_VTK,'(a)') '# vtk DataFile Version 2.0'
+    write(IOUT_VTK,'(a)') 'Source and Receiver VTK file'
+    write(IOUT_VTK,'(a)') 'ASCII'
+    write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+    write(IOUT_VTK, '(a,i6,a)') 'POINTS ', NSOURCES, ' float'
+    do isrc = 1, NSOURCES
+      write(IOUT_VTK,'(3e18.6)') sngl(xyz_found_source(1,isrc)), &
+                                 sngl(xyz_found_source(2,isrc)), &
+                                 sngl(xyz_found_source(3,isrc))
+    enddo
+    close(IOUT_VTK)
 
-    ! only extract receiver locations and remove temporary file
-    filename_new = trim(OUTPUT_FILES)//'/receiver.vtk'
-    write(command, &
-  "('awk ',a1,'{if (NR < 5) print $0;if (NR == 6)&
-   &print ',a1,'POINTS',i6,' float',a1,';if (NR > 5+',i6,')print $0}',a1,'<',a,'>',a,a1)")&
-      "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new),CHAR(0)
+    filename = trim(OUTPUT_FILES)//'/receiver.vtk'
+    open(IOUT_VTK,file=trim(filename),status='unknown',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening '//filename)
+    write(IOUT_VTK,'(a)') '# vtk DataFile Version 2.0'
+    write(IOUT_VTK,'(a)') 'Source and Receiver VTK file'
+    write(IOUT_VTK,'(a)') 'ASCII'
+    write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+    write(IOUT_VTK, '(a,i6,a)') 'POINTS ', nrec, ' float'
+    do irec = 1, nrec
+      write(IOUT_VTK,'(3e18.6)') sngl(xyz_receiver(1,irec)), &
+                                 sngl(xyz_receiver(2,irec)), &
+                                 sngl(xyz_receiver(3,irec))
+    enddo
+    close(IOUT_VTK)
 
-    ! calls as system command (system needs to have `awk` command)
-    call system_command(command)
 
-    ! only extract source locations and remove temporary file
-    filename_new = trim(OUTPUT_FILES)//'/source.vtk'
-    write(command, &
-  "('awk ',a1,'{if (NR < 6 + ',i6,') print $0}END{print}',a1,'<',a,'>',a,'; rm -f ',a,a1)")&
-      "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename),CHAR(0)
+  !KTAO: avoid system_call here, because the following error 
+  !      "EXECUTE_COMMAND_LINE: Invalid command line" might occur ocasionally
 
-    ! calls as system command (system needs to have `awk` command)
-    call system_command(command)
+  !   ! finishes VTK file
+  !   !  we should know NSOURCES+nrec at this point...
+  !   ! creates source/receiver location file
+  !   filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
+  !   filename_new = trim(OUTPUT_FILES)//'/sr.vtk'
+  !   write(command, &
+  ! "('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,'<',a,'>',a)")&
+  !     "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new)
+
+  !   ! calls as system command (system needs to have `sed` command)
+  !   call system_command(command)
+
+  !   ! only extract receiver locations and remove temporary file
+  !   filename_new = trim(OUTPUT_FILES)//'/receiver.vtk'
+  !   write(command, &
+  ! "('awk ',a1,'{if (NR < 5) print $0;if (NR == 6)&
+  !  &print ',a1,'POINTS',i6,' float',a1,';if (NR > 5+',i6,')print $0}',a1,'<',a,'>',a)")&
+  !     "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new)
+
+  !   ! calls as system command (system needs to have `awk` command)
+  !   call system_command(command)
+
+  !   ! only extract source locations and remove temporary file
+  !   filename_new = trim(OUTPUT_FILES)//'/source.vtk'
+  !   write(command, &
+  ! "('awk ',a1,'{if (NR < 6 + ',i6,') print $0}END{print}',a1,'<',a,'>',a,'; rm -f ',a)")&
+  !     "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename)
+
+  !   ! calls as system command (system needs to have `awk` command)
+  !   call system_command(command)
 
   endif
 
