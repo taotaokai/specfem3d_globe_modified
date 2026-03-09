@@ -849,8 +849,9 @@
          stop 'more than 100% for PERCENT_OF_MEM_TO_USE_PER_CORE makes no sense; exiting...'
     ! will need to remove the .and. .not. GPU_MODE test here
     ! if the undo_attenuation buffers are stored on the GPU instead of on the host
-    if (PERCENT_OF_MEM_TO_USE_PER_CORE > 92.d0 .and. .not. GPU_MODE) &
-         stop 'more than 92% for PERCENT_OF_MEM_TO_USE_PER_CORE when not using GPUs is risky; exiting...'
+    ! KTAO comment out
+    ! if (PERCENT_OF_MEM_TO_USE_PER_CORE > 92.d0 .and. .not. GPU_MODE) &
+    !      stop 'more than 92% for PERCENT_OF_MEM_TO_USE_PER_CORE when not using GPUs is risky; exiting...'
   endif
 
   what_we_can_use_in_GB = MEMORY_INSTALLED_PER_CORE_IN_GB * PERCENT_OF_MEM_TO_USE_PER_CORE / 100.d0
