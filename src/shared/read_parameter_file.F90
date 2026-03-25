@@ -366,6 +366,7 @@
   call read_value_logical(SUPPRESS_INTERNAL_TOPOGRAPHY, 'SUPPRESS_INTERNAL_TOPOGRAPHY', ier); ier = 0
   call read_value_logical(USE_TISO_ABOVE_220KM, 'USE_TISO_ABOVE_220KM', ier); ier = 0
   call read_value_logical(USE_TISO_ABOVE_670KM, 'USE_TISO_ABOVE_670KM', ier); ier = 0
+  call read_value_logical(USE_1D_REFERENCE, 'USE_1D_REFERENCE', ier); ier = 0
 
   ! (optional) regional local mesh parameters
   if (REGIONAL_MESH_CUTOFF) then

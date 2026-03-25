@@ -1086,7 +1086,7 @@
   character(len=*), parameter :: PATHNAME_GLL_modeldir = 'DATA/GLL/'
 
 ! to create a reference model based on the 1D reference model but with 3D crust and 410/660 topography
-  logical,parameter :: USE_1D_REFERENCE = .false.
+!  logical,parameter :: USE_1D_REFERENCE = .false.  !KTAO moved into Par_file
 
 !!-- uncomment for using PREM as reference model (used in CEM inversion)
 !  integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM

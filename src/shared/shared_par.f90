@@ -200,6 +200,7 @@
   double precision :: USER_R80_STRETCH_ADJUSTMENT = 999999.d0 ! default R90 is at 80 km depth, 999999 means not set
   logical :: SUPPRESS_MOHO_STRETCHING = .false. !KTAO: moved here from constants.h.in
   logical :: SUPPRESS_INTERNAL_TOPOGRAPHY = .false. !KTAO: moved here from constants.h.in
+  logical :: USE_1D_REFERENCE = .false. !KTAO: moved here from constants.h.in
 
   ! (optional) local mesh parameters
   ! for regional cutoff meshes (REGIONAL_MESH_CUTOFF must be .true. in Par_file)

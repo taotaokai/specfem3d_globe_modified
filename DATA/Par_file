@@ -101,6 +101,7 @@ USER_RMOHO_STRETCH_ADJUSTMENT = 0.0d0
 USER_R80_STRETCH_ADJUSTMENT = 0.0d0
 SUPPRESS_MOHO_STRETCHING = .false.
 SUPPRESS_INTERNAL_TOPOGRAPHY = .false.
+USE_1D_REFERENCE = .false.
 
 ## regional mesh cut-off
 # using this flag will cut-off the mesh in the mantle at a layer matching to the given cut-off depth.
