@@ -404,7 +404,7 @@
 ! the first doubling is implemented right below the Moho
 ! it seems optimal to implement the three other doublings at these depths
 ! in the mantle
-  double precision, parameter :: EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL = 1650000.d0
+!  double precision, parameter :: EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL = 1650000.d0 !KTAO: moved into Par_file
 ! in the outer core
   double precision, parameter :: EARTH_DEPTH_THIRD_DOUBLING_OPTIMAL  = 3860000.d0
 ! in the outer core

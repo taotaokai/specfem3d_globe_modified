@@ -363,11 +363,18 @@
     R80_FICTITIOUS_IN_MESHER, & !KTAO add
     SUPPRESS_MOHO_STRETCHING !KTAO add
 
+  !KTAO add
+  use shared_parameters, only: &
+    REGIONAL_MESH_CUTOFF, &
+    REGIONAL_MESH_ADD_2ND_DOUBLING, &
+    REGIONAL_MESH_CUTOFF_DEPTH, &
+    EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL
+
   use constants, only: MAX_NUMBER_OF_MESH_LAYERS
   use shared_parameters, only: NER => NER_auto_ner
 
   use constants, only: &
-    EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL, &
+    ! EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL, &  !KTAO: read from Par_file
     EARTH_DEPTH_THIRD_DOUBLING_OPTIMAL, &
     EARTH_DEPTH_FOURTH_DOUBLING_OPTIMAL
 
@@ -422,7 +429,12 @@
     ! radius(9)  = 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
     radius(9)  = R_PLANET - EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL ! 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
 
-    radius(10) = RTOPDDOUBLEPRIME   !     D_double_prime ~ 3630
+    if (REGIONAL_MESH_CUTOFF .and. REGIONAL_MESH_CUTOFF_DEPTH > 771.0d0) then
+      ! FIXME assuming cutoff depth is larger than EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL
+      radius(10) = R_PLANET - REGIONAL_MESH_CUTOFF_DEPTH * 1000.0d0  !KTAO add
+    else
+      radius(10) = RTOPDDOUBLEPRIME   !     D_double_prime ~ 3630
+    endif
     radius(11) = RCMB   !     CMB ~ 3480
 
     !radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface

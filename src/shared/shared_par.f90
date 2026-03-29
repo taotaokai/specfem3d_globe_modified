@@ -201,6 +201,7 @@
   logical :: SUPPRESS_MOHO_STRETCHING = .false. !KTAO: moved here from constants.h.in
   logical :: SUPPRESS_INTERNAL_TOPOGRAPHY = .false. !KTAO: moved here from constants.h.in
   logical :: USE_1D_REFERENCE = .false. !KTAO: moved here from constants.h.in
+  double precision :: EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL = 1650.d0
 
   ! (optional) local mesh parameters
   ! for regional cutoff meshes (REGIONAL_MESH_CUTOFF must be .true. in Par_file)

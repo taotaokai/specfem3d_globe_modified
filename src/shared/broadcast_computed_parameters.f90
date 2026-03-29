@@ -213,6 +213,7 @@
   call bcast_all_singledp(USER_R80_STRETCH_ADJUSTMENT)
   call bcast_all_singlel(SUPPRESS_MOHO_STRETCHING)
   call bcast_all_singlel(SUPPRESS_INTERNAL_TOPOGRAPHY)
+  call bcast_all_singledp(EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL)
 
   !KTAO (optional) define local mesh by NER, bottom depth and doubling
   call bcast_all_singlei(LOCAL_MESH_NUMBER_OF_LAYERS)

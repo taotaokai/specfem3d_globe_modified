@@ -102,6 +102,7 @@ USER_R80_STRETCH_ADJUSTMENT = 0.0d0
 SUPPRESS_MOHO_STRETCHING = .false.
 SUPPRESS_INTERNAL_TOPOGRAPHY = .false.
 USE_1D_REFERENCE = .false.
+EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL = 1000000.d0  # meters
 
 ## regional mesh cut-off
 # using this flag will cut-off the mesh in the mantle at a layer matching to the given cut-off depth.

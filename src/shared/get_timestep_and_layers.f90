@@ -740,11 +740,13 @@
   ! cut-off mesh
   if (REGIONAL_MESH_CUTOFF) then
     ! sets number of element layers to zero below the cut-off depth
-    if (REGIONAL_MESH_CUTOFF_DEPTH <= 771.d0) then
-      NER_TOPDDOUBLEPRIME_771  = 0
+    if (REGIONAL_MESH_CUTOFF_DEPTH <= 2891.d0) then
       NER_CMB_TOPDDOUBLEPRIME  = 0
       NER_OUTER_CORE           = 0
       NER_TOP_CENTRAL_CUBE_ICB = 0
+    endif
+    if (REGIONAL_MESH_CUTOFF_DEPTH <= 771.d0) then
+      NER_TOPDDOUBLEPRIME_771  = 0
     endif
     if (REGIONAL_MESH_CUTOFF_DEPTH <= 670.d0) NER_771_670  = 0
     if (REGIONAL_MESH_CUTOFF_DEPTH <= 600.d0) NER_670_600  = 0

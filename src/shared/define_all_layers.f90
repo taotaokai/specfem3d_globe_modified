@@ -47,7 +47,8 @@
 
   ! Earth
   use constants, only: &
-    EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL,EARTH_DEPTH_THIRD_DOUBLING_OPTIMAL,EARTH_DEPTH_FOURTH_DOUBLING_OPTIMAL
+    EARTH_DEPTH_THIRD_DOUBLING_OPTIMAL,EARTH_DEPTH_FOURTH_DOUBLING_OPTIMAL
+    ! EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL,EARTH_DEPTH_THIRD_DOUBLING_OPTIMAL,EARTH_DEPTH_FOURTH_DOUBLING_OPTIMAL
   ! Mars
   use constants, only: &
     MARS_DEPTH_SECOND_DOUBLING_OPTIMAL,MARS_DEPTH_THIRD_DOUBLING_OPTIMAL,MARS_DEPTH_FOURTH_DOUBLING_OPTIMAL
@@ -57,6 +58,9 @@
 
   use shared_parameters, only: ner_mesh_layers, &
     ratio_sampling_array,this_region_has_a_doubling,doubling_index,r_bottom,r_top
+
+  !KTAO add
+  use shared_parameters, only: EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL
 
   use shared_parameters, only: &
     NER_CRUST,NER_80_MOHO,NER_220_80, &
@@ -139,6 +143,8 @@
     if (REGIONAL_MESH_CUTOFF_DEPTH > 80.d0) ADD_1ST_DOUBLING = .true.
     ! second-doubling will be moved to 220km depth (default would be below 771km)
     if (REGIONAL_MESH_CUTOFF_DEPTH > 220.d0 .and. REGIONAL_MESH_ADD_2ND_DOUBLING) ADD_2ND_DOUBLING = .true.
+    !KTAO FIXME assuming ADD_2ND_DOUBLING when cutoff depth is below 771km
+    if (REGIONAL_MESH_CUTOFF_DEPTH > 771.d0) ADD_2ND_DOUBLING = .true.
   else
     ! default mesh
     ! note: all these parameters must be set to .true. for now,
@@ -187,33 +193,39 @@
     r_layer_bottom = RTOPDDOUBLEPRIME
 
     ! regional mesh cutoff
-    if (REGIONAL_MESH_CUTOFF) then
-      ! sets doubling layer around 220km
+    if (REGIONAL_MESH_CUTOFF .and. REGIONAL_MESH_CUTOFF_DEPTH <= 771.d0) then
+      ! sets 2nd doubling layer around 220km
       DEPTH_SECOND_DOUBLING_OPTIMAL = 220.d0
       ner_layer = NER_400_220
       r_layer_top = R220
       r_layer_bottom = R400
-    endif
 
-    ! finds best layer
-    do ielem = 2,ner_layer
-      zval = r_layer_bottom + ielem * (r_layer_top - r_layer_bottom) / dble(ner_layer)
-      distance = abs(zval - (R_PLANET - DEPTH_SECOND_DOUBLING_OPTIMAL))
+      ! finds best layer
+      do ielem = 2,ner_layer
+        zval = r_layer_bottom + ielem * (r_layer_top - r_layer_bottom) / dble(ner_layer)
+        distance = abs(zval - (R_PLANET - DEPTH_SECOND_DOUBLING_OPTIMAL))
 
-      ! debug
-      ! if (DEBUG .and. myrank == 0) &
-      !   print *,'debug: 2nd doubling',ielem,ner_layer,'dist/zval',distance,distance_min,zval
+        ! debug
+        ! if (DEBUG .and. myrank == 0) &
+        !   print *,'debug: 2nd doubling',ielem,ner_layer,'dist/zval',distance,distance_min,zval
 
-      ! checks if closer and sets as new depth
-      if (distance < distance_min) then
-        elem_doubling_mantle = ielem
-        distance_min = distance
-        DEPTH_SECOND_DOUBLING_REAL = R_PLANET - zval
+        ! checks if closer and sets as new depth
+        if (distance < distance_min) then
+          elem_doubling_mantle = ielem
+          distance_min = distance
+          DEPTH_SECOND_DOUBLING_REAL = R_PLANET - zval
+        endif
+      enddo
+
+      if (elem_doubling_mantle == -1) then
+        ! skip doubling layer
+        ADD_2ND_DOUBLING = .false.
+        elem_doubling_mantle = 0
+        DEPTH_SECOND_DOUBLING_REAL = (R_PLANET - R771)
       endif
-    enddo
-
-    !KTAO use value determined from auto_ner
-    if (.not. REGIONAL_MESH_CUTOFF) then
+    else
+      ! 2nd doubling layer after 771
+      !KTAO use value determined from auto_ner
       elem_doubling_mantle = NER_auto_ner(9)
       DEPTH_SECOND_DOUBLING_REAL = DEPTH_SECOND_DOUBLING_OPTIMAL
     endif
@@ -223,16 +235,8 @@
       print *,'debug: 2nd doubling index = ',elem_doubling_mantle,DEPTH_SECOND_DOUBLING_REAL,'(in mantle D" - 771)'
 
     ! check if layer found
-    if (REGIONAL_MESH_CUTOFF) then
-      if (elem_doubling_mantle == -1) then
-        ! skip doubling layer
-        ADD_2ND_DOUBLING = .false.
-        elem_doubling_mantle = 0
-        DEPTH_SECOND_DOUBLING_REAL = (R_PLANET - R771)
-      endif
-    else
-      if (elem_doubling_mantle == -1) stop 'Unable to determine second doubling element'
-    endif
+    if (elem_doubling_mantle == -1) stop 'Unable to determine second doubling element'
+
   endif
 
   ! find element below top of which we should implement the third doubling in the middle of the outer core
@@ -556,7 +560,7 @@
       ner_mesh_layers( 2) = NER_80_MOHO
       ner_mesh_layers( 3) = NER_220_80
 
-      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING .and. REGIONAL_MESH_CUTOFF_DEPTH <= 771.d0) then
         ! 2nd doubling after 220
         ner_mesh_layers( 4) = NER_400_220 - elem_doubling_mantle
         ner_mesh_layers( 5) = elem_doubling_mantle
@@ -584,7 +588,7 @@
 
       ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1) = 1
-      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING .and. REGIONAL_MESH_CUTOFF_DEPTH <= 771.d0) then
         ! 2nd doubling after 220
         if (ADD_1ST_DOUBLING) then
           ratio_sampling_array(2:4) = 2
@@ -630,7 +634,7 @@
         this_region_has_a_doubling(2)  = .true.
         last_doubling_layer = 2
       endif
-      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING .and. REGIONAL_MESH_CUTOFF_DEPTH <= 771.d0) then
         ! 2nd doubling after 220
         if (ADD_2ND_DOUBLING) then
           this_region_has_a_doubling(5)  = .true.
@@ -668,7 +672,7 @@
       r_top(3) = R80_FICTITIOUS_IN_MESHER
       r_bottom(3) = R220
 
-      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING .and. REGIONAL_MESH_CUTOFF_DEPTH <= 771.d0) then
         ! 2nd doubling after 220
         r_top(4) = R220
         r_bottom(4) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
@@ -706,8 +710,14 @@
 
         r_top(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
         r_bottom(9) = RTOPDDOUBLEPRIME
+        if (REGIONAL_MESH_CUTOFF .and. REGIONAL_MESH_CUTOFF_DEPTH > 771.d0) then
+          r_bottom(9) = R_PLANET - REGIONAL_MESH_CUTOFF_DEPTH * 1000.d0
+        endif
       endif
       r_top(10) = RTOPDDOUBLEPRIME
+      if (REGIONAL_MESH_CUTOFF .and. REGIONAL_MESH_CUTOFF_DEPTH > 771.d0) then
+        r_top(10) = R_PLANET - REGIONAL_MESH_CUTOFF_DEPTH * 1000.d0
+      endif
       r_bottom(10) = RCMB
 
       r_top(11) = RCMB
@@ -729,7 +739,7 @@
       rmaxs(3) = R80_FICTITIOUS_IN_MESHER / R_PLANET
       rmins(3) = R220 / R_PLANET
 
-      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING .and. REGIONAL_MESH_CUTOFF_DEPTH <= 771.d0) then
         ! 2nd doubling after 220
         rmaxs(4:5) = R220 / R_PLANET
         rmins(4:5) = R400 / R_PLANET
@@ -761,8 +771,14 @@
 
         rmaxs(8:9) = R771 / R_PLANET
         rmins(8:9) = RTOPDDOUBLEPRIME / R_PLANET
+        if (REGIONAL_MESH_CUTOFF .and. REGIONAL_MESH_CUTOFF_DEPTH > 771.d0) then
+          rmins(8:9) = (R_PLANET - REGIONAL_MESH_CUTOFF_DEPTH * 1000.d0) / R_PLANET
+        endif
       endif
       rmaxs(10) = RTOPDDOUBLEPRIME / R_PLANET
+      if (REGIONAL_MESH_CUTOFF .and. REGIONAL_MESH_CUTOFF_DEPTH > 771.d0) then
+        rmaxs(10) = (R_PLANET - REGIONAL_MESH_CUTOFF_DEPTH * 1000.d0) / R_PLANET
+      endif
       rmins(10) = RCMB / R_PLANET
 
       rmaxs(11:12) = RCMB / R_PLANET
@@ -1760,7 +1776,7 @@
     print *,'debug: define_all_layers:',NUMBER_OF_MESH_LAYERS
     do ielem = 1,NUMBER_OF_MESH_LAYERS
       print *,'debug:  layer ',ielem,': top/bottom ',sngl(R_PLANET - r_top(ielem)),sngl(R_PLANET - r_bottom(ielem)), &
-              ! 'rmin/rmax = ',sngl(rmins(ielem)),sngl(rmaxs(ielem)), 'ner',ner_mesh_layers(ielem), &
+              'rmin/rmax = ',sngl(rmins(ielem)),sngl(rmaxs(ielem)), & !, 'ner',ner_mesh_layers(ielem), &
               'ner',ner_mesh_layers(ielem), &
               'doubling',this_region_has_a_doubling(ielem),ratio_sampling_array(ielem)
     enddo
