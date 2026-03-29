@@ -203,6 +203,15 @@
   logical :: USE_1D_REFERENCE = .false. !KTAO: moved here from constants.h.in
   double precision :: EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL = 1650.d0
 
+  !KTAO (optional) radii of mesh layers
+  double precision :: USER_RMOHO_FICTITIOUS = -1.d0
+  double precision :: USER_R80_FICTITIOUS = -1.d0
+  double precision :: USER_R220 = -1.d0
+  double precision :: USER_R400 = -1.d0
+  double precision :: USER_R600 = -1.d0
+  double precision :: USER_R670 = -1.d0
+  double precision :: USER_R771 = -1.d0
+
   ! (optional) local mesh parameters
   ! for regional cutoff meshes (REGIONAL_MESH_CUTOFF must be .true. in Par_file)
   ! this will create a local mesh, i.e., doesn't honor Moho/R80/R220, but creates a crust & mantle mesh

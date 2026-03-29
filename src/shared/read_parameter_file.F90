@@ -368,6 +368,14 @@
   call read_value_logical(USE_TISO_ABOVE_670KM, 'USE_TISO_ABOVE_670KM', ier); ier = 0
   call read_value_logical(USE_1D_REFERENCE, 'USE_1D_REFERENCE', ier); ier = 0
   call read_value_double_precision(EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL, 'EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL', ier); ier = 0
+  !KTAO (optional) mesh layer depths
+  call read_value_double_precision(USER_RMOHO_FICTITIOUS, 'USER_RMOHO_FICTITIOUS', ier); ier = 0
+  call read_value_double_precision(USER_R80_FICTITIOUS, 'USER_R80_FICTITIOUS', ier); ier = 0
+  call read_value_double_precision(USER_R220, 'USER_R220', ier); ier = 0
+  call read_value_double_precision(USER_R400, 'USER_R400', ier); ier = 0
+  call read_value_double_precision(USER_R600, 'USER_R600', ier); ier = 0
+  call read_value_double_precision(USER_R670, 'USER_R670', ier); ier = 0
+  call read_value_double_precision(USER_R771, 'USER_R771', ier); ier = 0
 
   ! (optional) regional local mesh parameters
   if (REGIONAL_MESH_CUTOFF) then

@@ -1221,6 +1221,11 @@
     HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL,REFERENCE_1D_MODEL, &
     NCHUNKS,NEX_XI,NEX_ETA
 
+  !KTAO add
+  use shared_parameters, only: &
+    USER_RMOHO_FICTITIOUS, USER_R80_FICTITIOUS, USER_R220, &
+    USER_R400, USER_R600, USER_R670, USER_R771
+
   ! reference models
   use model_prem_par
   use model_sohl_par
@@ -1645,6 +1650,16 @@
       endif
 
     endif
+
+    !KTAO user defined radii of mesh layers
+    if (USER_RMOHO_FICTITIOUS > 0.0d0) RMOHO_FICTITIOUS_IN_MESHER = USER_RMOHO_FICTITIOUS
+    if (USER_R80_FICTITIOUS > 0.0d0) R80_FICTITIOUS_IN_MESHER = USER_R80_FICTITIOUS
+    if (USER_R220 > 0.0d0) R220 = USER_R220
+    if (USER_R400 > 0.0d0) R400 = USER_R400
+    if (USER_R600 > 0.0d0) R600 = USER_R600
+    if (USER_R670 > 0.0d0) R670 = USER_R670
+    if (USER_R771 > 0.0d0) R771 = USER_R771
+
   endif
 
   end subroutine get_model_parameters_radii

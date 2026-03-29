@@ -97,12 +97,21 @@ RECORD_LENGTH_IN_MINUTES        = 2.5d0
 # (optional) for the stretching of crustal elements in the case of 3D models
 # the ratio between top and bottom element thicknesses of the crustal(top) mesh layer
 USER_MAX_RATIO_CRUST_STRETCHING = 0.5d0
-USER_RMOHO_STRETCH_ADJUSTMENT = 0.0d0
-USER_R80_STRETCH_ADJUSTMENT = 0.0d0
 SUPPRESS_MOHO_STRETCHING = .false.
 SUPPRESS_INTERNAL_TOPOGRAPHY = .false.
 USE_1D_REFERENCE = .false.
 EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL = 1000000.d0  # meters
+
+# (optional) radii of mesh layers
+# USER_RMOHO_STRETCH_ADJUSTMENT = 0.0d0
+# USER_R80_STRETCH_ADJUSTMENT = 0.0d0
+USER_RMOHO_FICTITIOUS = 6316000.d0  # 55 km depth
+USER_R80_FICTITIOUS = 6251000.d0  # 120 km
+USER_R220 = 6151000.d0  # 220 km
+USER_R400 = 5961000.d0  # 410 km
+USER_R600 = 5771000.d0  # 600 km
+USER_R670 = 5721000.d0  # 650 km
+USER_R771 = 5600000.d0  # 771 km
 
 ## regional mesh cut-off
 # using this flag will cut-off the mesh in the mantle at a layer matching to the given cut-off depth.
