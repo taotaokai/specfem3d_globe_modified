@@ -1168,8 +1168,9 @@
     MAX_RATIO_CRUST_STRETCHING = EARTH_MAX_RATIO_CRUST_STRETCHING
     RMOHO_STRETCH_ADJUSTMENT = EARTH_RMOHO_STRETCH_ADJUSTMENT
     R80_STRETCH_ADJUSTMENT = EARTH_R80_STRETCH_ADJUSTMENT
-    REGIONAL_MOHO_MESH = EARTH_REGIONAL_MOHO_MESH
-    HONOR_DEEP_MOHO = EARTH_HONOR_DEEP_MOHO
+    !KTAO commented out since  REGIONAL_MOHO_MESH and HONOR_DEEP_MOHO are already set in read_parameter_file()
+    ! REGIONAL_MOHO_MESH = EARTH_REGIONAL_MOHO_MESH
+    ! HONOR_DEEP_MOHO = EARTH_HONOR_DEEP_MOHO
   end select
 
   !KTAO overwrite with user defined crustal stretching
@@ -1223,8 +1224,9 @@
 
   !KTAO add
   use shared_parameters, only: &
-    USER_RMOHO_FICTITIOUS, USER_R80_FICTITIOUS, USER_R220, &
-    USER_R400, USER_R600, USER_R670, USER_R771
+    REGIONAL_MOHO_MESH, HONOR_DEEP_MOHO, &
+    USER_R220, USER_R400, USER_R600, USER_R670, USER_R771
+    ! USER_RMOHO_FICTITIOUS, USER_R80_FICTITIOUS
 
   ! reference models
   use model_prem_par
@@ -1626,6 +1628,19 @@
     R80_FICTITIOUS_IN_MESHER = R80
 
     if (CRUSTAL .and. CASE_3D) then
+      !KTAO: special setup for regional moho mesh
+      if (REGIONAL_MOHO_MESH) then
+        if (HONOR_DEEP_MOHO) then
+          RMOHO_STRETCH_ADJUSTMENT = -20000.d0  ! 60 km depth
+          print *, 'force RMOHO_STRETCH_ADJUSTMENT = -20000.d0'
+        else
+          RMOHO_STRETCH_ADJUSTMENT = -15000.d0  ! 55 km depth
+          print *, 'force RMOHO_STRETCH_ADJUSTMENT = -15000.d0'
+        endif
+        R80_STRETCH_ADJUSTMENT = -40000.d0  ! R80 to 120 km depth
+        print *, 'force R80_STRETCH_ADJUSTMENT = -40000.d0'
+      endif
+
       !> Hejun
       ! mesh will honor 3D crustal moho topography
       ! moves MOHO up 5km to honor moho topography deeper than 35 km
@@ -1652,8 +1667,8 @@
     endif
 
     !KTAO user defined radii of mesh layers
-    if (USER_RMOHO_FICTITIOUS > 0.0d0) RMOHO_FICTITIOUS_IN_MESHER = USER_RMOHO_FICTITIOUS
-    if (USER_R80_FICTITIOUS > 0.0d0) R80_FICTITIOUS_IN_MESHER = USER_R80_FICTITIOUS
+    ! if (USER_RMOHO_FICTITIOUS > 0.0d0) RMOHO_FICTITIOUS_IN_MESHER = USER_RMOHO_FICTITIOUS
+    ! if (USER_R80_FICTITIOUS > 0.0d0) R80_FICTITIOUS_IN_MESHER = USER_R80_FICTITIOUS
     if (USER_R220 > 0.0d0) R220 = USER_R220
     if (USER_R400 > 0.0d0) R400 = USER_R400
     if (USER_R600 > 0.0d0) R600 = USER_R600

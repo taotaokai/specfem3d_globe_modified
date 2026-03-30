@@ -196,16 +196,16 @@
   ! for the stretching of crustal elements in the case of 3D models
   ! define the ratio between top and bottom element thickesses of the crustal(top) mesh layer
   double precision :: USER_MAX_RATIO_CRUST_STRETCHING = -1.d0 ! -1 means not set, will use values in constants.h
-  double precision :: USER_RMOHO_STRETCH_ADJUSTMENT = 999999.d0 ! 999999 means not set, default RMOHO is at 40 km depth
-  double precision :: USER_R80_STRETCH_ADJUSTMENT = 999999.d0 ! default R90 is at 80 km depth, 999999 means not set
   logical :: SUPPRESS_MOHO_STRETCHING = .false. !KTAO: moved here from constants.h.in
   logical :: SUPPRESS_INTERNAL_TOPOGRAPHY = .false. !KTAO: moved here from constants.h.in
   logical :: USE_1D_REFERENCE = .false. !KTAO: moved here from constants.h.in
   double precision :: EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL = 1650.d0
 
   !KTAO (optional) radii of mesh layers
-  double precision :: USER_RMOHO_FICTITIOUS = -1.d0
-  double precision :: USER_R80_FICTITIOUS = -1.d0
+  ! double precision :: USER_RMOHO_FICTITIOUS = -1.d0
+  ! double precision :: USER_R80_FICTITIOUS = -1.d0
+  double precision :: USER_RMOHO_STRETCH_ADJUSTMENT = 999999.d0 ! 999999 means not set, default RMOHO is at 40 km depth
+  double precision :: USER_R80_STRETCH_ADJUSTMENT = 999999.d0 ! default R80 is at 80 km depth, 999999 means not set
   double precision :: USER_R220 = -1.d0
   double precision :: USER_R400 = -1.d0
   double precision :: USER_R600 = -1.d0

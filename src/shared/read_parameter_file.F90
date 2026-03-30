@@ -38,6 +38,9 @@
   use constants
   use shared_input_parameters
 
+  !KTAO add
+  use shared_compute_parameters, only : REGIONAL_MOHO_MESH, HONOR_DEEP_MOHO
+
   implicit none
 
   ! local variables
@@ -369,19 +372,24 @@
   call read_value_logical(USE_1D_REFERENCE, 'USE_1D_REFERENCE', ier); ier = 0
   call read_value_double_precision(EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL, 'EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL', ier); ier = 0
   !KTAO (optional) mesh layer depths
-  call read_value_double_precision(USER_RMOHO_FICTITIOUS, 'USER_RMOHO_FICTITIOUS', ier); ier = 0
-  call read_value_double_precision(USER_R80_FICTITIOUS, 'USER_R80_FICTITIOUS', ier); ier = 0
+  ! call read_value_double_precision(USER_RMOHO_FICTITIOUS, 'USER_RMOHO_FICTITIOUS', ier); ier = 0
+  ! call read_value_double_precision(USER_R80_FICTITIOUS, 'USER_R80_FICTITIOUS', ier); ier = 0
   call read_value_double_precision(USER_R220, 'USER_R220', ier); ier = 0
   call read_value_double_precision(USER_R400, 'USER_R400', ier); ier = 0
   call read_value_double_precision(USER_R600, 'USER_R600', ier); ier = 0
   call read_value_double_precision(USER_R670, 'USER_R670', ier); ier = 0
   call read_value_double_precision(USER_R771, 'USER_R771', ier); ier = 0
+  !KTAO
+  call read_value_logical(REGIONAL_MOHO_MESH, 'USER_REGIONAL_MOHO_MESH', ier); ier = 0
+  print *,'read_parameter_file:384 REGIONAL_MOHO_MESH = ',REGIONAL_MOHO_MESH
+  call read_value_logical(HONOR_DEEP_MOHO, 'USER_HONOR_DEEP_MOHO', ier); ier = 0
+  print *,'read_parameter_file:384 HONOR_DEEP_MOHO = ',HONOR_DEEP_MOHO
 
   ! (optional) regional local mesh parameters
   if (REGIONAL_MESH_CUTOFF) then
     ! flag to switch on local mesh
     call read_value_logical(USE_LOCAL_MESH, 'USE_LOCAL_MESH', ier); ier = 0
-    print *,'******* USE_LOCAL_MESH = ',USE_LOCAL_MESH
+    print *,'read_parameter_file:392 USE_LOCAL_MESH = ',USE_LOCAL_MESH
 
     ! total number of mesh layers for local mesh
     ! (moho used will be the fictitious moho depth, i.e., at 40 or 35 km depth depending on EARTH_RMOHO_STRETCH_ADJUSTMENT)

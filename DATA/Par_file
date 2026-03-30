@@ -94,24 +94,43 @@ RECORD_LENGTH_IN_MINUTES        = 2.5d0
 #
 #-----------------------------------------------------------
 
-# (optional) for the stretching of crustal elements in the case of 3D models
-# the ratio between top and bottom element thicknesses of the crustal(top) mesh layer
-USER_MAX_RATIO_CRUST_STRETCHING = 0.5d0
-SUPPRESS_MOHO_STRETCHING = .false.
+#----- (optional) 
 SUPPRESS_INTERNAL_TOPOGRAPHY = .false.
 USE_1D_REFERENCE = .false.
 EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL = 1000000.d0  # meters
 
-# (optional) radii of mesh layers
-# USER_RMOHO_STRETCH_ADJUSTMENT = 0.0d0
-# USER_R80_STRETCH_ADJUSTMENT = 0.0d0
-USER_RMOHO_FICTITIOUS = 6316000.d0  # 55 km depth
-USER_R80_FICTITIOUS = 6251000.d0  # 120 km
+#----- (optional) for the stretching of crustal elements in the case of 3D models
+SUPPRESS_MOHO_STRETCHING = .false.
+#-- the ratio between top and bottom element thicknesses of the crustal(top) mesh layer
+# only applicable when USER_REGIONAL_MOHO_MESH = .false.
+USER_MAX_RATIO_CRUST_STRETCHING = 0.5d0 
+#-- special setup for regional moho mesh
+# force NER_CRUST = 3
+# force element interfaces at R_TOP, R15, R35 and RMOHO_FICTITIOUS_IN_MESH(either 55 or 60 km)
+# force USER_R80_STRETCH_ADJUSTMENT = -40000.d0, i.e. R80 to 120 km depth
+USER_REGIONAL_MOHO_MESH = .false.
+#-- flag to honor deep moho
+# inactive if USER_REGIONAL_MOHO_MESH = .false.
+# false => force RMOHO_STRETCH_ADJUSTMENT = -15000.0d0 (55 km depth)
+# true => force RMOHO_STRETCH_ADJUSTMENT = -20000.0d0 (60 km depth)
+USER_HONOR_DEEP_MOHO = .false.
+
+#----- (optional) radii of mesh layers
+USER_RMOHO_STRETCH_ADJUSTMENT = -15000.0d0 # default at 40 --> 55 km depth
+USER_R80_STRETCH_ADJUSTMENT = -40000.0d0 # default at 80 --> 120 km depth
 USER_R220 = 6151000.d0  # 220 km
 USER_R400 = 5961000.d0  # 410 km
 USER_R600 = 5771000.d0  # 600 km
 USER_R670 = 5721000.d0  # 650 km
 USER_R771 = 5600000.d0  # 771 km
+# # (optional) number of elements of each mesh layer (-1: not defined)
+# USER_NER_CRUST = 0
+# USER_NER_80_MOHO = 0
+# USER_NER_220_80 = 0
+# USER_NER_400_220 = 0
+# USER_NER_600_400 = 0
+# USER_NER_670_600 = 0
+# USER_NER_771_670 = 0
 
 ## regional mesh cut-off
 # using this flag will cut-off the mesh in the mantle at a layer matching to the given cut-off depth.
