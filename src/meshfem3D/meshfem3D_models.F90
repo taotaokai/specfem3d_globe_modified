@@ -724,7 +724,8 @@
     if (MODEL_3D_MANTLE_PERTUBATIONS &
         .and. r_prem > RCMB/R_PLANET &
         .and. .not. suppress_mantle_extension &
-        .and. .not. USE_1D_REFERENCE) then
+        .and. .not. USE_1D_REFERENCE &
+        .and. .not. MODEL_GLL) then
 
       ! extend 3-D mantle model above the Moho to the surface before adding the crust
       if (r_prem > RCMB/R_PLANET .and. r_prem < RMOHO/R_PLANET) then
