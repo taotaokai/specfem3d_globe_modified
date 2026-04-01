@@ -1425,8 +1425,6 @@
     R400 = 5961000.d0           ! 410km discontinuity
     R600 = 5771000.d0
     R670 = 5721000.d0           ! 650km discontinuity
-    ! R670 = 5701000.d0           ! KTAO force to 670km for Europe case
-    ! R670 = 5686000.d0           ! KTAO force to 685km for 30sec case
     R771 = 5600000.d0
     RTOPDDOUBLEPRIME = 3630000.d0
     RCMB = 3479958.d0
@@ -1670,9 +1668,9 @@
     ! if (USER_RMOHO_FICTITIOUS > 0.0d0) RMOHO_FICTITIOUS_IN_MESHER = USER_RMOHO_FICTITIOUS
     ! if (USER_R80_FICTITIOUS > 0.0d0) R80_FICTITIOUS_IN_MESHER = USER_R80_FICTITIOUS
     if (USER_R220 > 0.0d0) R220 = USER_R220
-    if (USER_R400 > 0.0d0) R400 = USER_R400
+    ! if (USER_R400 > 0.0d0) R400 = USER_R400  ! must be consistent with 410-km depth defined in 1-D model
     if (USER_R600 > 0.0d0) R600 = USER_R600
-    if (USER_R670 > 0.0d0) R670 = USER_R670
+    ! if (USER_R670 > 0.0d0) R670 = USER_R670 ! must be consistent with 670-km depth defined in 1-D model
     if (USER_R771 > 0.0d0) R771 = USER_R771
 
   endif

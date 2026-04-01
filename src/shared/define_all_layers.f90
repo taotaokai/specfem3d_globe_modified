@@ -1775,8 +1775,8 @@
   if (DEBUG .and. myrank == 0) then
     print *,'debug: define_all_layers:',NUMBER_OF_MESH_LAYERS
     do ielem = 1,NUMBER_OF_MESH_LAYERS
-      print *,'debug:  layer ',ielem,': top/bottom ',sngl(R_PLANET - r_top(ielem)),sngl(R_PLANET - r_bottom(ielem)), &
-              'rmin/rmax = ',sngl(rmins(ielem)),sngl(rmaxs(ielem)), & !, 'ner',ner_mesh_layers(ielem), &
+      print *,'debug:  layer ',ielem,': top/bottom ',R_PLANET - r_top(ielem),R_PLANET - r_bottom(ielem), &
+              'rmin/rmax = ',rmins(ielem),rmaxs(ielem), & !, 'ner',ner_mesh_layers(ielem), &
               'ner',ner_mesh_layers(ielem), &
               'doubling',this_region_has_a_doubling(ielem),ratio_sampling_array(ielem)
     enddo

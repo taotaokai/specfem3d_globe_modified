@@ -635,7 +635,7 @@
 
   subroutine meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho, &
                                             vpv,vph,vsv,vsh,eta_aniso, &
-                                            RCMB,RMOHO, &
+                                            RCMB,RMOHO,R670, &
                                             r,theta,phi, &
                                             c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                             c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
@@ -650,7 +650,7 @@
   double precision, intent(inout) :: rho
   double precision, intent(inout) :: vpv,vph,vsv,vsh,eta_aniso
 
-  double precision,intent(in) :: RCMB,RMOHO
+  double precision,intent(in) :: RCMB,RMOHO, R670
   double precision,intent(in) :: r,theta,phi
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
@@ -671,6 +671,8 @@
   real(kind=4) :: xdvpv,xdvph,xdvsv,xdvsh
 
   logical :: found_crust,suppress_mantle_extension,is_inside_region,convert_tiso_to_cij
+
+  logical :: upper_650, lower_650
 
   ! initializes perturbation values
   dvs = ZERO
@@ -818,7 +820,21 @@
           xcolat = sngl(theta*180.0d0/PI)
           xlon = sngl(phi*180.0d0/PI)
           xrad = sngl(r_used*R_PLANET_KM)
-          call model_s362ani_subshsv(xcolat,xlon,xrad,xdvsh,xdvsv,xdvph,xdvpv)
+
+          ! use r_prem to determine whether above or below 650-km discontinuity
+          ! note: r_prem is forced to stay within the layer top and bottom depth with tolerance factor 
+          if (r_prem < R670) then
+            upper_650 = .false.
+            lower_650 = .true.
+          else if (r_prem > R670) then
+            upper_650 = .true.
+            lower_650 = .false.
+          else
+            print *, "ERROR: r_prem = ", r_prem, " R670 = ", R670
+            stop "ERROR: r_prem is exactly at R670, should never happen"
+          endif
+
+          call model_s362ani_subshsv(xcolat,xlon,xrad,xdvsh,xdvsv,xdvph,xdvpv, upper_650,lower_650)
 
           if (TRANSVERSE_ISOTROPY) then
             ! tiso perturbation

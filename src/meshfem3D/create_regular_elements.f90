@@ -132,6 +132,9 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '    number of regular elements  = ',nelements
+    write(IMAIN,*) 'NEX_PER_PROC_XI,NEX_PER_PROC_ETA = ',NEX_PER_PROC_XI, NEX_PER_PROC_ETA
+    write(IMAIN,*) 'ner_without_doubling = ',ner_without_doubling
+    write(IMAIN,*) 'ilayer,ratio_sampling_array(ilayer) = ',ilayer,ratio_sampling_array(ilayer)
     call flush_IMAIN()
   endif
 
