@@ -823,10 +823,10 @@
 
           ! use r_prem to determine whether above or below 650-km discontinuity
           ! note: r_prem is forced to stay within the layer top and bottom depth with tolerance factor 
-          if (r_prem < R670) then
+          if (r_prem < R670 / R_PLANET) then
             upper_650 = .false.
             lower_650 = .true.
-          else if (r_prem > R670) then
+          else if (r_prem > R670 / R_PLANET) then
             upper_650 = .true.
             lower_650 = .false.
           else
