@@ -391,7 +391,7 @@
       if (HONOR_DEEP_MOHO) then
         call stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho_radius)
       else
-        call stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho_radius)
+        call stretch_moho_v2(ia,xelm,yelm,zelm,x,y,z,r,moho_radius)
       endif
     endif
 
@@ -767,6 +767,76 @@
   endif
 
   end subroutine stretch_moho
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine stretch_moho_v2(ia,xelm,yelm,zelm,x,y,z,r,moho)
+
+! honors shallow and middle depth moho, deep moho will be interpolated within elements
+! mesh will get stretched down to r220
+
+  use constants, only: NGNOD,EARTH_R,R_UNIT_SPHERE,SMALLVAL
+
+  use shared_parameters, only: R_PLANET
+
+  use meshfem_par, only: myrank, ner_mesh_layers,R220,RMOHO_FICTITIOUS_IN_MESHER
+
+  use regions_mesh_par2, only: stretch_tab
+
+  implicit none
+
+  integer, intent(in) :: ia
+
+  double precision, intent(inout) :: xelm(NGNOD)
+  double precision, intent(inout) :: yelm(NGNOD)
+  double precision, intent(inout) :: zelm(NGNOD)
+
+  double precision, intent(inout) :: x,y,z,r
+  double precision, intent(in) :: moho
+
+  ! local parameters
+  double precision :: elevation,gamma,R_stretch
+  integer :: i, ner_crust, ier_to_stretch
+
+  ner_crust = ner_mesh_layers(1)
+  ier_to_stretch = 1
+  do i = 1,ner_crust
+    if (moho < stretch_tab(1, i)/R_PLANET .and. moho >= stretch_tab(2, i)/R_PLANET) then
+      ier_to_stretch = i
+      exit
+    endif
+  enddo
+  if (moho < stretch_tab(2, ner_crust)/R_PLANET) then
+    ier_to_stretch = ner_crust
+  endif
+
+  R_stretch = stretch_tab(2, ier_to_stretch) / R_PLANET
+  elevation = moho - R_stretch
+
+  if (r >= R_stretch) then 
+    gamma=(R_UNIT_SPHERE-r)/(R_UNIT_SPHERE-R_stretch)
+  else if (r < R_stretch .and. r > RMOHO_FICTITIOUS_IN_MESHER/R_PLANET) then
+    gamma=(r-RMOHO_FICTITIOUS_IN_MESHER/R_PLANET)/(R_stretch-RMOHO_FICTITIOUS_IN_MESHER/R_PLANET)
+  else
+    gamma = 0.0d0
+  endif
+  if (gamma < -0.0001d0 .or. gamma > 1.0001d0) then
+    stop 'incorrect value of gamma for moho from crust 2.0'
+  endif
+
+  ! if (myrank == 0) then
+  !   print *,'------ stretching moho...'
+  !   print *, "r, moho = ", r, moho
+  !   print *, "R_stretch, elevation = ", R_stretch, elevation
+  !   print *, "ier_to_stretch = ", ier_to_stretch
+  !   print *, "gamma = ", gamma
+  ! endif
+
+  call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
+
+  end subroutine stretch_moho_v2
 
 !
 !-------------------------------------------------------------------------------------------------

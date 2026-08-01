@@ -1627,17 +1627,17 @@
 
     if (CRUSTAL .and. CASE_3D) then
       !KTAO: special setup for regional moho mesh
-      if (REGIONAL_MOHO_MESH) then
-        if (HONOR_DEEP_MOHO) then
-          RMOHO_STRETCH_ADJUSTMENT = -20000.d0  ! 60 km depth
-          print *, 'force RMOHO_STRETCH_ADJUSTMENT = -20000.d0'
-        else
-          RMOHO_STRETCH_ADJUSTMENT = -15000.d0  ! 55 km depth
-          print *, 'force RMOHO_STRETCH_ADJUSTMENT = -15000.d0'
-        endif
-        R80_STRETCH_ADJUSTMENT = -40000.d0  ! R80 to 120 km depth
-        print *, 'force R80_STRETCH_ADJUSTMENT = -40000.d0'
-      endif
+      ! if (REGIONAL_MOHO_MESH) then
+      !   if (HONOR_DEEP_MOHO) then
+      !     RMOHO_STRETCH_ADJUSTMENT = -20000.d0  ! 60 km depth
+      !     print *, 'force RMOHO_STRETCH_ADJUSTMENT = -20000.d0'
+      !   else
+      !     RMOHO_STRETCH_ADJUSTMENT = -15000.d0  ! 55 km depth
+      !     print *, 'force RMOHO_STRETCH_ADJUSTMENT = -15000.d0'
+      !   endif
+      !   R80_STRETCH_ADJUSTMENT = -40000.d0  ! R80 to 120 km depth
+      !   print *, 'force R80_STRETCH_ADJUSTMENT = -40000.d0'
+      ! endif
 
       !> Hejun
       ! mesh will honor 3D crustal moho topography

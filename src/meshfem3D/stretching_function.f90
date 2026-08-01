@@ -35,7 +35,7 @@
 !KTAO [2025-09-25] update layer thickness calculation by analytical expressions, instead of using an iterative method.
 
   use constants, only: myrank
-  use shared_parameters, only: MAX_RATIO_CRUST_STRETCHING
+  use shared_parameters, only: MAX_RATIO_CRUST_STRETCHING, R_PLANET
 
   implicit none
 
@@ -128,6 +128,9 @@
     print *,'mesh layer top/bottom',r_top,r_bottom
     do i = 1,ner
       print *,'debug: ilayer=',i,'top=',stretch_tab(1,i),'bottom=',stretch_tab(2,i),'thickness',stretch_tab(1,i) - stretch_tab(2,i)
+    enddo
+    do i = 1,ner
+      print *,'debug: ilayer=',i,'top=',stretch_tab(1,i)/R_PLANET,'bottom=',stretch_tab(2,i)/R_PLANET
     enddo
   endif
 

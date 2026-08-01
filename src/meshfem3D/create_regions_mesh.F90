@@ -1034,7 +1034,9 @@
 
       ! differentiate between regional meshes or global meshes
       if (REGIONAL_MOHO_MESH) then
-        call stretching_function_regional(r_top(1),r_bottom(1),ner_mesh_layers(1),stretch_tab)
+        !KTAO commented out
+        ! call stretching_function_regional(r_top(1),r_bottom(1),ner_mesh_layers(1),stretch_tab)
+        call stretching_function(r_top(1),r_bottom(1),ner_mesh_layers(1),stretch_tab)
       else
         call stretching_function(r_top(1),r_bottom(1),ner_mesh_layers(1),stretch_tab)
       endif
